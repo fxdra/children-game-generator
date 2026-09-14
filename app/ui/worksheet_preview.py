@@ -180,9 +180,28 @@ class WorksheetCanvas(QWidget):
         apple_size = width * 0.075
         spacing = width * 0.055
 
+        # =========================
+        # JUMLAH OBJECT
+        # =========================
+
+        try:
+            correct_answer = int(
+                self.worksheet_data.get(
+                    "answer",
+                    "3",
+                )
+            )
+        except (TypeError, ValueError):
+            correct_answer = 3
+
+        object_count = max(
+            1,
+            min(correct_answer, 10),
+        )
+
         total_width = (
-            (apple_size * 3)
-            + (spacing * 2)
+            (apple_size * object_count)
+            + (spacing * (object_count - 1))
         )
 
         start_x = center_x - (total_width / 2)
@@ -200,7 +219,7 @@ class WorksheetCanvas(QWidget):
             str(apple_path)
         )
 
-        for index in range(3):
+        for index in range(object_count):
             x = (
                 start_x
                 + index * (apple_size + spacing)
@@ -251,14 +270,23 @@ class WorksheetCanvas(QWidget):
 
         option_y = height * 0.66
 
-        options = ["2", "3", "4"]
+        options = [
+            correct_answer - 1,
+            correct_answer,
+            correct_answer + 1,
+        ]
+
+        options = [
+            max(1, value)
+            for value in options
+        ]
 
         option_width = width * 0.16
         gap = width * 0.04
 
         total_options_width = (
-            option_width * 3
-            + gap * 2
+            option_width * len(options)
+            + gap * (len(options) - 1)
         )
 
         start_x = (
@@ -299,7 +327,7 @@ class WorksheetCanvas(QWidget):
                 int(option_width),
                 int(circle_size),
                 Qt.AlignLeft | Qt.AlignVCenter,
-                option,
+                str(option),
             )
 
     def _draw_apple(
