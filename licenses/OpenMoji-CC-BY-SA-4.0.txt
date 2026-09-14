@@ -1,0 +1,20 @@
+OpenMoji
+========
+
+This project uses graphics from OpenMoji.
+
+OpenMoji is an open-source emoji and icon project.
+
+Graphics License:
+Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+
+https://creativecommons.org/licenses/by-sa/4.0/
+
+Attribution:
+"All emojis designed by OpenMoji – the open-source emoji and icon project."
+
+Project:
+https://openmoji.org/
+
+Source:
+https://github.com/hfg-gmuend/openmoji

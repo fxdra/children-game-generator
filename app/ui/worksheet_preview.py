@@ -1,5 +1,6 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QRectF
 from PySide6.QtGui import QFont, QPainter, QPen
+from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
@@ -11,6 +12,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.services.worksheet_pdf import WorksheetPDFService
+from app.services.openmoji_asset import OpenMojiAssetService
 
 
 class WorksheetCanvas(QWidget):
@@ -185,17 +187,35 @@ class WorksheetCanvas(QWidget):
 
         start_x = center_x - (total_width / 2)
 
+        # =========================
+        # OPENMOJI APPLE
+        # =========================
+
+        apple_path = OpenMojiAssetService.get_asset(
+            "apple",
+            "color",
+        )
+
+        renderer = QSvgRenderer(
+            str(apple_path)
+        )
+
         for index in range(3):
             x = (
                 start_x
                 + index * (apple_size + spacing)
             )
 
-            self._draw_apple(
-                painter,
+            target_rect = QRectF(
                 x,
                 apple_y,
                 apple_size,
+                apple_size,
+            )
+
+            renderer.render(
+                painter,
+                target_rect,
             )
 
         # =========================

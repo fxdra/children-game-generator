@@ -1,0 +1,12 @@
+## Third-Party Assets
+
+### OpenMoji
+
+This project uses OpenMoji graphics.
+
+All emojis designed by OpenMoji – the open-source emoji and icon project.
+
+License: CC BY-SA 4.0
+
+https://openmoji.org/
+https://creativecommons.org/licenses/by-sa/4.0/

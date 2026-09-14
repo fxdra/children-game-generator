@@ -3,6 +3,10 @@ from pathlib import Path
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
+from reportlab.graphics import renderPDF
+from svglib.svglib import svg2rlg
+
+from app.services.openmoji_asset import OpenMojiAssetService
 
 
 class WorksheetPDFService:
@@ -181,7 +185,7 @@ class WorksheetPDFService:
                 * (object_size + spacing)
             )
 
-            WorksheetPDFService._draw_apple(
+            WorksheetPDFService._draw_openmoji(
                 pdf,
                 x,
                 object_y,
@@ -291,50 +295,54 @@ class WorksheetPDFService:
         return result
 
     @staticmethod
-    def _draw_apple(
+    def _draw_openmoji(
         pdf,
         x,
         y,
         size,
     ):
-        pdf.setLineWidth(1.2)
-
-        # =========================
-        # APPLE BODY
-        # =========================
-
-        radius = size * 0.28
-
-        pdf.circle(
-            x + size * 0.32,
-            y + size * 0.30,
-            radius,
+        svg_path = OpenMojiAssetService.get_asset(
+            "apple",
+            "color",
         )
 
-        pdf.circle(
-            x + size * 0.68,
-            y + size * 0.30,
-            radius,
+        drawing = svg2rlg(
+            str(svg_path)
         )
 
-        # =========================
-        # STEM
-        # =========================
+        if drawing is None:
+            raise ValueError(
+                "Gagal membaca SVG OpenMoji."
+            )
 
-        pdf.line(
-            x + size * 0.50,
-            y + size * 0.55,
-            x + size * 0.55,
-            y + size * 0.85,
+        if drawing.width <= 0 or drawing.height <= 0:
+            raise ValueError(
+                "Ukuran SVG OpenMoji tidak valid."
+            )
+
+        # Pertahankan rasio asli SVG
+        scale = min(
+            size / drawing.width,
+            size / drawing.height,
         )
 
-        # =========================
-        # LEAF
-        # =========================
+        pdf.saveState()
 
-        pdf.ellipse(
-            x + size * 0.52,
-            y + size * 0.70,
-            x + size * 0.80,
-            y + size * 0.86,
+        pdf.translate(
+            x,
+            y,
         )
+
+        pdf.scale(
+            scale,
+            scale,
+        )
+
+        renderPDF.draw(
+            drawing,
+            pdf,
+            0,
+            0,
+        )
+
+        pdf.restoreState()
