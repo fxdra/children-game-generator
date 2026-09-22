@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 class OpenMojiAssetService:
 
     BASE_DIR = (
@@ -47,3 +46,21 @@ class OpenMojiAssetService:
             )
 
         return asset_path
+
+    @classmethod
+    def get_all_assets(cls):
+        assets = []
+
+        if not cls.COLOR_DIR.exists():
+            return assets
+
+        for asset_path in sorted(
+            cls.COLOR_DIR.glob("*.svg")
+        ):
+            assets.append({
+                "name": asset_path.stem,
+                "filename": asset_path.name,
+                "path": asset_path,
+            })
+
+        return assets
