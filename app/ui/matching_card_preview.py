@@ -34,16 +34,77 @@ class MatchingCardCanvas(QWidget):
     def _build_cards(self):
         pairs = self.matching_data.get(
             "pairs",
-            []
+            [],
         )
+
+        mode = self.matching_data.get(
+            "matching_mode",
+            "Gambar ↔ Kata",
+        )
+
+        randomizer = Random()
+
+        # =========================
+        # GAMBAR ↔ GAMBAR
+        # =========================
+
+        if mode == "Gambar ↔ Gambar":
+            left_cards = []
+
+            right_cards = []
+
+            for pair_index, pair in enumerate(
+                pairs,
+                start=1,
+            ):
+                left_cards.append(
+                    {
+                        "pair_index": pair_index,
+                        "type": "image",
+                        "asset": pair["asset"],
+                    }
+                )
+
+                right_cards.append(
+                    {
+                        "pair_index": pair_index,
+                        "type": "image",
+                        "asset": pair["match_asset"],
+                    }
+                )
+
+            randomizer.shuffle(
+                right_cards
+            )
+
+            cards = []
+
+            for left_card, right_card in zip(
+                left_cards,
+                right_cards,
+            ):
+                cards.append(
+                    left_card
+                )
+
+                cards.append(
+                    right_card
+                )
+
+            return cards
+
+        # =========================
+        # GAMBAR ↔ KATA
+        # =========================
 
         words = [
             pair["word"]
             for pair in pairs
         ]
 
-        randomizer = Random()
-        randomizer.shuffle(words)
+        randomizer.shuffle(
+            words
+        )
 
         cards = []
 
@@ -51,19 +112,25 @@ class MatchingCardCanvas(QWidget):
             pairs,
             start=1,
         ):
-            cards.append({
-                "pair_index": pair_index,
-                "type": "image",
-                "asset": pair["asset"],
-                "word": pair["word"],
-            })
+            cards.append(
+                {
+                    "pair_index": pair_index,
+                    "type": "image",
+                    "asset": pair["asset"],
+                    "word": pair["word"],
+                }
+            )
 
-            cards.append({
-                "pair_index": pair_index,
-                "type": "word",
-                "asset": pair["asset"],
-                "word": words[pair_index - 1],
-            })
+            cards.append(
+                {
+                    "pair_index": pair_index,
+                    "type": "word",
+                    "asset": pair["asset"],
+                    "word": words[
+                        pair_index - 1
+                    ],
+                }
+            )
 
         return cards
 
@@ -135,7 +202,7 @@ class MatchingCardCanvas(QWidget):
         grid_right = width - page_margin
 
         columns = 2
-        rows = 4
+        rows = 6
 
         horizontal_gap = width * 0.035
         vertical_gap = height * 0.018
@@ -317,15 +384,20 @@ class MatchingCardCanvas(QWidget):
 
     def _draw_word_card(
         self,
-        painter: QPainter,
-        rect: QRectF,
-        card: dict,
+        painter,
+        rect,
+        card,
     ):
         word_font = QFont(
             "Arial",
             max(
-                14,
-                int(rect.width() * 0.085),
+                10,
+                int(
+                    min(
+                        rect.width() * 0.075,
+                        rect.height() * 0.22,
+                    )
+                ),
             ),
         )
 
@@ -339,17 +411,19 @@ class MatchingCardCanvas(QWidget):
             Qt.black
         )
 
-        painter.drawText(
-            rect.adjusted(
-                12,
-                12,
-                -12,
-                -12,
-            ),
-            Qt.AlignCenter,
-            card["word"],
+        text_rect = rect.adjusted(
+            12,
+            10,
+            -12,
+            -10,
         )
 
+        painter.drawText(
+            text_rect,
+            Qt.AlignCenter
+            | Qt.TextWordWrap,
+            card["word"],
+        )
 
 class MatchingCardPreviewDialog(QDialog):
     def __init__(

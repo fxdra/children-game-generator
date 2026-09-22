@@ -25,19 +25,25 @@ class OpenMojiAssetService:
         name: str,
         variant: str = "color",
     ) -> Path:
-        if name not in cls.ASSETS:
-            raise ValueError(
-                f"Asset OpenMoji '{name}' belum tersedia."
-            )
 
         if variant == "black":
             base_dir = cls.BLACK_DIR
         else:
             base_dir = cls.COLOR_DIR
 
-        asset_path = (
-            base_dir / cls.ASSETS[name]
-        )
+        # Asset lama yang mempunyai nama alias.
+        if name in cls.ASSETS:
+            filename = cls.ASSETS[name]
+
+        # Asset yang dipilih langsung dari Asset Picker.
+        else:
+            filename = (
+                f"{name}.svg"
+                if not name.lower().endswith(".svg")
+                else name
+            )
+
+        asset_path = base_dir / filename
 
         if not asset_path.exists():
             raise FileNotFoundError(

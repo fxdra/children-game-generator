@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QGridLayout,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QPushButton,
     QScrollArea,
     QVBoxLayout,
@@ -32,6 +33,7 @@ class AssetPickerDialog(QDialog):
 
         self.selected_asset = None
         self.asset_buttons = []
+        self.all_assets = []
 
         self.setWindowTitle(
             "Pilih Asset"
@@ -83,6 +85,24 @@ class AssetPickerDialog(QDialog):
 
         main_layout.addWidget(
             subtitle
+        )
+
+        self.search_input = QLineEdit()
+
+        self.search_input.setObjectName(
+            "searchInput"
+        )
+
+        self.search_input.setPlaceholderText(
+            "Cari asset..."
+        )
+
+        self.search_input.textChanged.connect(
+            self._filter_assets
+        )
+
+        main_layout.addWidget(
+            self.search_input
         )
 
         # =========================
@@ -173,8 +193,28 @@ class AssetPickerDialog(QDialog):
             footer_layout
         )
 
-    def _load_assets(self):
-        assets = OpenMojiAssetService.get_all_assets()
+    def _load_assets(
+        self,
+        assets=None,
+    ):
+        if assets is None:
+            assets = (
+                OpenMojiAssetService
+                .get_all_assets()
+            )
+
+            self.all_assets = assets
+
+        # Hapus widget grid sebelumnya.
+        while self.grid_layout.count():
+            item = self.grid_layout.takeAt(0)
+
+            widget = item.widget()
+
+            if widget is not None:
+                widget.deleteLater()
+
+        self.asset_buttons.clear()
 
         columns = 6
 
@@ -195,12 +235,10 @@ class AssetPickerDialog(QDialog):
                 92,
             )
 
-            pixmap = self._render_asset(
-                asset["path"]
-            )
-
             button.setIcon(
-                QIcon(pixmap)
+                QIcon(
+                    str(asset["path"])
+                )
             )
 
             button.setIconSize(
@@ -237,6 +275,29 @@ class AssetPickerDialog(QDialog):
             self.asset_buttons.append(
                 button
             )
+
+    def _filter_assets(
+        self,
+        text: str,
+    ):
+        text = text.strip().lower()
+
+        if not text:
+            self._load_assets(
+                self.all_assets
+            )
+            return
+
+        filtered_assets = [
+            asset
+            for asset in self.all_assets
+            if text in asset["name"].lower()
+            or text in asset["filename"].lower()
+        ]
+
+        self._load_assets(
+            filtered_assets
+        )
 
     def _render_asset(self, asset_path):
         pixmap = QPixmap(
