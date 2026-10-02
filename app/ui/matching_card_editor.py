@@ -306,20 +306,17 @@ class MatchingCardEditor(QWidget):
         self.header_match = header_match
 
         # DEFAULT PAIRS
-        default_pairs = [
-            ("cat", "KUCING"),
-            ("dog", "ANJING"),
-            ("apple", "APEL"),
-            ("banana", "PISANG"),
-            ("1F433", "PAUS"),
-            ("1F436", "ANJING"),
+        default_words = [
+            "KUCING",
+            "ANJING",
+            "APEL",
+            "PISANG",
+            "PAUS",
+            "ANJING",
         ]
 
-        for index, (
-            asset_name,
-            word,
-        ) in enumerate(
-            default_pairs,
+        for index, word in enumerate(
+            default_words,
             start=1,
         ):
             row = index
@@ -819,6 +816,7 @@ class MatchingCardEditor(QWidget):
                 "match_asset"
             ]
 
+            # Kosongkan asset kiri
             asset_button.setIcon(
                 QIcon()
             )
@@ -828,6 +826,7 @@ class MatchingCardEditor(QWidget):
                 None,
             )
 
+            # Kosongkan asset kanan
             match_asset_button.setIcon(
                 QIcon()
             )
@@ -837,36 +836,8 @@ class MatchingCardEditor(QWidget):
                 None,
             )
 
-            pair_input["word"].setText(
-                word
-            )
-
-        self.material_info.clear()
-        self.material_data = {}
-        self.mode_combo.setCurrentIndex(0)
-
-        default_pairs = [
-            ("cat", "KUCING"),
-            ("dog", "ANJING"),
-            ("apple", "APEL"),
-            ("banana", "PISANG"),
-            ("1F433", "PAUS"),
-            ("1F436", "ANJING"),
-        ]
-
-        for pair_input, (asset_name, word) in zip(
-            self.pair_inputs,
-            default_pairs,
-        ):
-            asset_button = pair_input[
-                "asset"
-            ]
-
-            self._set_asset_button_icon(
-                asset_button,
-                asset_name,
-            )
-
+            # Default kata hanya untuk
+            # mode Gambar ↔ Kata
             pair_input["word"].setText(
                 word
             )
