@@ -10,12 +10,16 @@ from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
+    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
+from pathlib import Path
+
 from app.services.openmoji_asset import OpenMojiAssetService
+from app.services.matching_card_pdf import MatchingCardPDFService
 
 
 class MatchingCardCanvas(QWidget):
@@ -357,7 +361,13 @@ class MatchingCardCanvas(QWidget):
                 target_rect,
             )
 
-        except Exception:
+        except Exception as error:
+            print(
+                "ERROR RENDER ASSET:",
+                card.get("asset"),
+                error,
+            )
+
             painter.setPen(
                 Qt.red
             )
@@ -424,7 +434,7 @@ class MatchingCardCanvas(QWidget):
             | Qt.TextWordWrap,
             card["word"],
         )
-
+    
 class MatchingCardPreviewDialog(QDialog):
     def __init__(
         self,
@@ -476,6 +486,18 @@ class MatchingCardPreviewDialog(QDialog):
 
         footer_layout.addStretch()
 
+        self.export_button = QPushButton(
+            "Export PDF"
+        )
+
+        self.export_button.clicked.connect(
+            self._export_pdf
+        )
+
+        footer_layout.addWidget(
+            self.export_button
+        )
+
         close_button = QPushButton(
             "Tutup"
         )
@@ -491,3 +513,73 @@ class MatchingCardPreviewDialog(QDialog):
         main_layout.addLayout(
             footer_layout
         )
+
+    def _export_pdf(self):
+        output_dir = (
+            Path(__file__).resolve().parents[2]
+            / "output"
+            / "pdf"
+        )
+
+        output_dir.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        title = self.matching_data.get(
+            "title",
+            "matching-card",
+        )
+
+        safe_title = "".join(
+            char
+            if char.isalnum()
+            or char in (" ", "-", "_")
+            else "_"
+            for char in title
+        ).strip()
+
+        if not safe_title:
+            safe_title = "matching-card"
+
+        output_path = (
+            output_dir
+            / f"{safe_title}.pdf"
+        )
+
+        counter = 2
+
+        while output_path.exists():
+            output_path = (
+                output_dir
+                / f"{safe_title} ({counter}).pdf"
+            )
+
+            counter += 1
+
+        try:
+            MatchingCardPDFService.export(
+                self.matching_data,
+                output_path,
+            )
+
+            QMessageBox.information(
+                self,
+                "Berhasil",
+                (
+                    "Matching Card berhasil "
+                    "diekspor ke:\n\n"
+                    f"{output_path}"
+                ),
+            )
+
+        except Exception as error:
+            QMessageBox.critical(
+                self,
+                "Export Gagal",
+                (
+                    "Terjadi kesalahan saat "
+                    "export PDF:\n\n"
+                    f"{error}"
+                ),
+            )

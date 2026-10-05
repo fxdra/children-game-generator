@@ -35,6 +35,9 @@ class AssetPickerDialog(QDialog):
         self.asset_buttons = []
         self.all_assets = []
 
+        self.target_index = 0
+        self.total_targets = 6
+
         self.setWindowTitle(
             "Pilih Asset"
         )
@@ -75,16 +78,28 @@ class AssetPickerDialog(QDialog):
             title
         )
 
-        subtitle = QLabel(
-            "Pilih gambar yang akan digunakan."
+        self.target_label = QLabel(
+            "Pasangan 1 dari 6"
         )
 
-        subtitle.setObjectName(
+        self.target_label.setObjectName(
+            "sectionTitle"
+        )
+
+        main_layout.addWidget(
+            self.target_label
+        )
+
+        self.target_description = QLabel(
+            "Pilih gambar untuk pasangan nomor 1."
+        )
+
+        self.target_description.setObjectName(
             "pageSubtitle"
         )
 
         main_layout.addWidget(
-            subtitle
+            self.target_description
         )
 
         self.search_input = QLineEdit()
@@ -341,6 +356,17 @@ class AssetPickerDialog(QDialog):
             True
         )
 
+    def _update_target_indicator(self):
+        current = self.target_index + 1
+
+        self.target_label.setText(
+            f"Pasangan {current} dari {self.total_targets}"
+        )
+
+        self.target_description.setText(
+            f"Pilih gambar untuk pasangan nomor {current}."
+        )
+
     def _confirm_selection(self):
         if not self.selected_asset:
             return
@@ -349,8 +375,31 @@ class AssetPickerDialog(QDialog):
             self.selected_asset
         )
 
-        self.accept()
+        self._clear_selection()
 
+    def _clear_selection(self):
+        self.selected_asset = None
+
+        for button in self.asset_buttons:
+            button.setChecked(False)
+
+        self.select_button.setEnabled(
+            False
+        )
+
+        self._update_target_indicator()
+
+    def set_target(
+        self,
+        target_index: int,
+        total_targets: int,
+    ):
+        self.target_index = target_index
+        self.total_targets = total_targets
+
+        self._clear_selection()
+        self._update_target_indicator()
+    
 if __name__ == "__main__":
     import sys
 

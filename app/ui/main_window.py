@@ -14,6 +14,8 @@ from app.ui.sidebar import Sidebar
 from app.ui.worksheet_editor import WorksheetEditor
 from app.ui.worksheet_preview import WorksheetPreviewDialog
 from app.ui.matching_card_preview import MatchingCardPreviewDialog
+from app.ui.coloring_editor import ColoringEditor
+from app.ui.coloring_preview import ColoringPreviewDialog
 
 
 class MainWindow(QMainWindow):
@@ -60,12 +62,14 @@ class MainWindow(QMainWindow):
         self.material_editor = MaterialEditor()
         self.matching_card_editor = MatchingCardEditor()
         self.worksheet_editor = WorksheetEditor()
+        self.coloring_editor = ColoringEditor()
 
         self.pages.addWidget(self.dashboard)
         self.pages.addWidget(self.materials)
         self.pages.addWidget(self.material_editor)
         self.pages.addWidget(self.worksheet_editor)
         self.pages.addWidget(self.matching_card_editor)
+        self.pages.addWidget(self.coloring_editor)
 
         # =========================
         # MAIN LAYOUT
@@ -98,6 +102,14 @@ class MainWindow(QMainWindow):
 
         self.matching_card_editor.back_requested.connect(
             self._back_to_material_editor
+        )
+
+        self.coloring_editor.back_requested.connect(
+            self._back_to_material_editor
+        )
+
+        self.coloring_editor.preview_requested.connect(
+            self._coloring_preview
         )
 
         self.matching_card_editor.preview_requested.connect(
@@ -148,6 +160,11 @@ class MainWindow(QMainWindow):
             self.matching_card_editor.set_material_data(material_data)
             self.pages.setCurrentWidget(self.matching_card_editor)
 
+        elif material_data["activity_type"] == "Coloring":
+            self.coloring_editor.reset_form()
+            self.coloring_editor.set_material_data(material_data)
+            self.pages.setCurrentWidget(self.coloring_editor)
+
         else:
             QMessageBox.information(
                 self,
@@ -170,6 +187,17 @@ class MainWindow(QMainWindow):
     def _matching_card_preview(self, matching_data: dict):
         dialog = MatchingCardPreviewDialog(
             matching_data,
+            self,
+        )
+
+        dialog.exec()
+
+    def _coloring_preview(
+        self,
+        coloring_data: dict,
+    ):
+        dialog = ColoringPreviewDialog(
+            coloring_data,
             self,
         )
 
@@ -286,20 +314,26 @@ class MainWindow(QMainWindow):
             }
 
             QFrame#contentCard {
-                background-color: #FFFFFF;
+                background-color: #2B2B2B;
                 border: 1px solid #E3E7ED;
                 border-radius: 10px;
             }
 
             QLabel#sectionTitle {
-                color: #172033;
+                color: #FFFFFF;
                 font-size: 17px;
                 font-weight: 700;
             }
 
             QLabel#emptyText {
-                color: #8A95A5;
+                color: #FFFFFF;
                 font-size: 13px;
+            }
+
+            QLabel#emptyTitle {
+                color: #FFFFFF;
+                font-size: 18px;
+                font-weight: 700;
             }
 
             /* =========================
@@ -313,7 +347,7 @@ class MainWindow(QMainWindow):
             }
 
             QLineEdit#searchInput {
-                color: #172033;
+                color: #FFFFFF;
                 background-color: #F8F9FB;
                 border: 1px solid #DCE1E8;
                 border-radius: 7px;
@@ -340,7 +374,7 @@ class MainWindow(QMainWindow):
             }
 
             QLabel#emptyTitle {
-                color: #172033;
+                color: #FFFFFF;
                 font-size: 18px;
                 font-weight: 700;
             }
@@ -350,15 +384,15 @@ class MainWindow(QMainWindow):
                ========================= */
 
             QLabel#formLabel {
-                color: #172033;
+                color: #FFFFFF;
                 font-size: 13px;
                 font-weight: 600;
             }
 
             QLineEdit#formInput,
             QComboBox#formCombo {
-                color: #172033;
-                background-color: #F8F9FB;
+                color: #FFFFFF;
+                background-color: #2B2B2B;
                 border: 1px solid #DCE1E8;
                 border-radius: 7px;
                 padding: 10px 12px;
@@ -366,17 +400,32 @@ class MainWindow(QMainWindow):
                 min-height: 18px;
             }
 
+            QLineEdit#formInput {
+                placeholder-text-color: #9DA8BA;
+            }
+
+            QComboBox#formCombo {
+                color: #FFFFFF;
+            }
+
+            QComboBox#formCombo QAbstractItemView {
+                color: #FFFFFF;
+                background-color: #2B2B2B;
+                selection-color: #FFFFFF;
+                selection-background-color: #30415F;
+            }
+
             QLineEdit#formInput:focus,
             QComboBox#formCombo:focus {
                 border: 1px solid #2F6FED;
-                background-color: #FFFFFF;
+                background-color: #2B2B2B;
             }
 
             QComboBox QAbstractItemView {
-                background-color: #FFFFFF;
-                color: #172033;
-                selection-background-color: #DCE8FF;
-                selection-color: #172033;
+                background-color: #2B2B2B;
+                color: #FFFFFF;
+                selection-background-color: #30415F;
+                selection-color: #FFFFFF;
             }
 
             QPushButton#secondaryButton {
@@ -424,6 +473,15 @@ class MainWindow(QMainWindow):
                 background-color: #EEF3FF;
             }
 
+            QTextEdit#skillsDisplay {
+                background-color: #2B2B2B;
+                color: #5CE65C;
+                border: 1px solid #E2E8F0;
+                border-radius: 8px;
+                padding: 10px;
+                font-size: 14px;
+            }
+
             /* =========================
             WORKSHEET EDITOR
             ========================= */
@@ -447,3 +505,4 @@ class MainWindow(QMainWindow):
                 background-color: #FFFFFF;
             }
         """)
+

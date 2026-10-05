@@ -1,14 +1,13 @@
-from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QFrame,
     QGridLayout,
     QHBoxLayout,
     QLabel,
-    QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
+from app.services.openmoji_asset import OpenMojiAssetService
 
 class Dashboard(QWidget):
     def __init__(self):
@@ -43,12 +42,6 @@ class Dashboard(QWidget):
         header_layout.addLayout(title_layout)
         header_layout.addStretch()
 
-        create_button = QPushButton("+  Buat Materi")
-        create_button.setObjectName("primaryButton")
-        create_button.setCursor(Qt.PointingHandCursor)
-
-        header_layout.addWidget(create_button)
-
         main_layout.addLayout(header_layout)
 
         # Statistics
@@ -76,10 +69,12 @@ class Dashboard(QWidget):
             1,
         )
 
+        asset_count = len(OpenMojiAssetService.get_all_assets())
+
         stats_layout.addWidget(
             self._create_stat_card(
                 "Asset",
-                "0",
+                str(asset_count),
                 "Gambar dan asset",
             ),
             0,

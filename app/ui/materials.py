@@ -47,13 +47,6 @@ class Materials(QWidget):
         header_layout.addLayout(title_layout)
         header_layout.addStretch()
 
-        create_button = QPushButton("+  Buat Materi")
-        create_button.clicked.connect(self.create_requested.emit)
-        create_button.setObjectName("primaryButton")
-        create_button.setCursor(Qt.PointingHandCursor)
-
-        header_layout.addWidget(create_button)
-
         main_layout.addLayout(header_layout)
 
         # =========================
@@ -106,7 +99,7 @@ class Materials(QWidget):
         empty_description.setObjectName("emptyText")
         empty_description.setAlignment(Qt.AlignCenter)
 
-        empty_create_button = QPushButton("+  Buat Materi Pertama")
+        empty_create_button = QPushButton("+  Buat Materi")
         empty_create_button.clicked.connect(self.create_requested.emit)
         empty_create_button.setObjectName("primaryButton")
         empty_create_button.setCursor(Qt.PointingHandCursor)

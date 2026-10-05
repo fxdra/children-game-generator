@@ -10,8 +10,9 @@ from PySide6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QWidget,
+    QTextEdit,
 )
-
+from app.core.skill_mapping import get_weighted_skills
 
 class MaterialEditor(QWidget):
     back_requested = Signal()
@@ -115,8 +116,7 @@ class MaterialEditor(QWidget):
             "Worksheet",
             "Flashcard",
             "Matching Card",
-            "Maze",
-            "Tracing",
+            "Maze / Tracing",
             "Coloring",
             "Puzzle",
             "Board Game",
@@ -127,6 +127,29 @@ class MaterialEditor(QWidget):
         form_layout.addRow(
             self._create_label("Jenis Aktivitas"),
             self.activity_combo,
+        )
+
+        self.category_combo.currentTextChanged.connect(
+            self._update_skills
+        )
+
+        self.activity_combo.currentTextChanged.connect(
+            self._update_skills
+        )
+
+        # Skill yang ditargetkan
+        self.skills_display = QTextEdit()
+        self.skills_display.setReadOnly(True)
+        self.skills_display.setObjectName("skillsDisplay")
+        self.skills_display.setPlaceholderText(
+            "Skill akan muncul otomatis berdasarkan "
+            "kategori dan jenis aktivitas."
+        )
+        self.skills_display.setMinimumHeight(100)
+
+        form_layout.addRow(
+            self._create_label("Skill yang didapatkan anak"),
+            self.skills_display,
         )
 
         main_layout.addWidget(form_card)
@@ -156,11 +179,41 @@ class MaterialEditor(QWidget):
         footer_layout.addWidget(continue_button)
 
         main_layout.addLayout(footer_layout)
+        self._update_skills()
 
     def _create_label(self, text: str):
         label = QLabel(text)
         label.setObjectName("formLabel")
         return label
+
+    def _update_skills(self):
+        category = self.category_combo.currentText()
+        activity_type = self.activity_combo.currentText()
+
+        skills = get_weighted_skills(
+            category,
+            activity_type,
+        )
+
+        if not skills:
+            self.skills_display.clear()
+            return
+
+        lines = []
+
+        for item in skills:
+            skill = item["skill"]
+            weight = item["weight"]
+
+            arrows = "↑" * weight
+
+            lines.append(
+                f"{arrows} {skill}"
+            )
+
+        self.skills_display.setPlainText(
+            "\n".join(lines)
+        )
 
     def _continue(self):
         title = self.title_input.text().strip()

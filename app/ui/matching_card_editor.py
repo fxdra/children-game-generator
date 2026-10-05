@@ -598,14 +598,23 @@ class MatchingCardEditor(QWidget):
         self,
         pair_index: int,
     ):
+        self._asset_picker_pair_index = (
+            pair_index
+        )
+
         dialog = AssetPickerDialog(
             self
+        )
+
+        dialog.set_target(
+            pair_index,
+            len(self.pair_inputs),
         )
 
         dialog.asset_selected.connect(
             lambda asset_name:
             self._asset_selected(
-                pair_index,
+                self._asset_picker_pair_index,
                 asset_name,
                 dialog,
             )
@@ -651,7 +660,34 @@ class MatchingCardEditor(QWidget):
             asset_name,
         )
 
-        dialog.accept()
+        if self.mode_combo.currentText() == (
+            "Gambar ↔ Gambar"
+        ):
+            match_asset_button = pair_input[
+                "match_asset"
+            ]
+
+            self._set_asset_button_icon(
+                match_asset_button,
+                asset_name,
+            )
+
+        # LANJUT KE PASANGAN BERIKUTNYA
+        next_pair_index = (
+            pair_index + 1
+        )
+
+        if next_pair_index < len(
+            self.pair_inputs
+        ):
+            self._asset_picker_pair_index = (
+                next_pair_index
+            )
+
+            dialog.set_target(
+                next_pair_index,
+                len(self.pair_inputs),
+            )
 
     def _match_asset_selected(
         self,
