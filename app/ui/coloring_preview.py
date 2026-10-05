@@ -3,12 +3,13 @@ from PySide6.QtSvgWidgets import QSvgWidget
 from PySide6.QtWidgets import (
     QDialog,
     QHBoxLayout,
+    QMessageBox,
     QPushButton,
     QVBoxLayout,
 )
 
 from app.services.coloring_renderer import ColoringRenderer
-
+from app.services.coloring_pdf import ColoringPDF
 
 class ColoringPreviewDialog(QDialog):
 
@@ -49,15 +50,12 @@ class ColoringPreviewDialog(QDialog):
         # RENDER COLORING SVG
         # =================================================
 
-        result = ColoringRenderer.render_coloring(
-            self.coloring_data["asset"]
+        result = ColoringRenderer.render_coloring_sheet(
+            self.coloring_data["assets"]
         )
 
         self.svg_widget = QSvgWidget()
-
-        self.svg_widget.load(
-            str(result["output_path"])
-        )
+        self.svg_widget.load(result["svg_data"])
 
         self.svg_widget.setMinimumSize(
             600,
@@ -74,21 +72,33 @@ class ColoringPreviewDialog(QDialog):
         # =================================================
 
         footer_layout = QHBoxLayout()
-
         footer_layout.addStretch()
+        export_button = QPushButton(
+            "Export PDF"
+        )
+        export_button.setObjectName(
+            "primaryButton"
+        )
+        export_button.setCursor(
+            Qt.PointingHandCursor
+        )
+        export_button.clicked.connect(
+            self._export_pdf
+        )
+
+        footer_layout.addWidget(
+            export_button
+        )
 
         close_button = QPushButton(
             "Tutup"
         )
-
         close_button.setObjectName(
             "secondaryButton"
         )
-
         close_button.setCursor(
             Qt.PointingHandCursor
         )
-
         close_button.clicked.connect(
             self.accept
         )
@@ -100,3 +110,30 @@ class ColoringPreviewDialog(QDialog):
         main_layout.addLayout(
             footer_layout
         )
+        
+    def _export_pdf(self):
+        try:
+            output_path = ColoringPDF.export(
+                self.coloring_data
+            )
+
+            QMessageBox.information(
+                self,
+                "PDF Berhasil",
+                (
+                    "Worksheet Coloring berhasil "
+                    "dibuat.\n\n"
+                    f"File:\n{output_path}"
+                ),
+            )
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Gagal Export PDF",
+                (
+                    "Terjadi kesalahan saat "
+                    "membuat PDF.\n\n"
+                    f"{e}"
+                ),
+            )

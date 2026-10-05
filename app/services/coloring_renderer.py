@@ -273,27 +273,7 @@ class ColoringRenderer:
         color_path = analysis["color_path"]
         black_path = analysis["black_path"]
 
-        output_dir = (
-            cls.BASE_DIR.parent.parent
-            / "output"
-            / "preview"
-            / "coloring"
-        )
-
-        output_dir.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
-
-        output_path = (
-            output_dir
-            / f"{Path(filename).stem}_coloring.svg"
-        )
-
-        # -------------------------------------------------
         # Parse SVG sumber
-        # -------------------------------------------------
-
         color_root = ET.parse(
             color_path
         ).getroot()
@@ -302,10 +282,7 @@ class ColoringRenderer:
             black_path
         ).getroot()
 
-        # -------------------------------------------------
         # A4 portrait
-        # -------------------------------------------------
-
         page_width = 794
         page_height = 1123
 
@@ -319,10 +296,7 @@ class ColoringRenderer:
             },
         )
 
-        # -------------------------------------------------
         # Background
-        # -------------------------------------------------
-
         ET.SubElement(
             svg,
             "rect",
@@ -335,10 +309,7 @@ class ColoringRenderer:
             },
         )
 
-        # -------------------------------------------------
         # Judul
-        # -------------------------------------------------
-
         title = ET.SubElement(
             svg,
             "text",
@@ -355,10 +326,7 @@ class ColoringRenderer:
 
         title.text = "MEWARNAI"
 
-        # -------------------------------------------------
         # Label
-        # -------------------------------------------------
-
         example_label = ET.SubElement(
             svg,
             "text",
@@ -391,15 +359,8 @@ class ColoringRenderer:
 
         coloring_label.text = "WARNAI"
 
-        # -------------------------------------------------
-        # COLOR — reference kecil
-        #
-        # Sebelumnya:
-        # translate(100 150) scale(2)
-        #
-        # Sekarang sedikit diturunkan dan tetap kecil.
-        # -------------------------------------------------
 
+        # COLOR — reference kecil
         color_group = ET.SubElement(
             svg,
             "g",
@@ -416,12 +377,7 @@ class ColoringRenderer:
                 cls._copy_svg_element(element)
             )
 
-        # -------------------------------------------------
         # BLACK — target mewarnai
-        #
-        # Dibuat lebih besar dan sedikit diturunkan.
-        # -------------------------------------------------
-
         black_group = ET.SubElement(
             svg,
             "g",
@@ -438,10 +394,7 @@ class ColoringRenderer:
                 cls._copy_svg_element(element)
             )
 
-        # -------------------------------------------------
         # Instruksi
-        # -------------------------------------------------
-
         instruction = ET.SubElement(
             svg,
             "text",
@@ -459,10 +412,8 @@ class ColoringRenderer:
             "Warnai gambar sesuai contoh."
         )
 
-        # -------------------------------------------------
-        # Nama
-        # -------------------------------------------------
 
+        # Nama
         name_label = ET.SubElement(
             svg,
             "text",
@@ -490,30 +441,336 @@ class ColoringRenderer:
             },
         )
 
-        # -------------------------------------------------
-        # Namespace
-        # -------------------------------------------------
 
+        # Namespace
         ET.register_namespace(
             "",
             "http://www.w3.org/2000/svg",
         )
 
-        # -------------------------------------------------
         # Simpan
-        # -------------------------------------------------
-
-        tree = ET.ElementTree(svg)
-
-        tree.write(
-            output_path,
+        svg_data = ET.tostring(
+            svg,
             encoding="utf-8",
             xml_declaration=True,
         )
 
         return {
             "filename": filename,
-            "output_path": output_path,
+            "svg_data": svg_data,
             "color_path": color_path,
             "black_path": black_path,
+        }
+
+    @classmethod
+    def render_coloring_sheet(
+        cls,
+        filenames: list[str],
+    ) -> dict:
+        """
+        Membuat worksheet Coloring A4
+        dengan 3 asset dalam satu halaman.
+
+        Setiap asset terdiri dari:
+        - Color SVG sebagai contoh
+        - Black SVG sebagai gambar untuk diwarnai
+
+        Hasil SVG dibuat di memory.
+        Tidak membuat file SVG ke disk.
+        """
+
+        if len(filenames) != 3:
+            raise ValueError(
+                "Coloring membutuhkan tepat 3 asset."
+            )
+
+        analyses = []
+
+        for filename in filenames:
+
+            analysis = cls.analyze(
+                filename
+            )
+
+            if not analysis["supported"]:
+                raise ValueError(
+                    f"Asset tidak mendukung Coloring: "
+                    f"{filename}"
+                )
+
+            analyses.append(
+                analysis
+            )
+
+        # =================================================
+        # A4 PORTRAIT
+        # =================================================
+
+        page_width = 794
+        page_height = 1123
+
+        svg = ET.Element(
+            "svg",
+            {
+                "xmlns": (
+                    "http://www.w3.org/2000/svg"
+                ),
+                "width": str(page_width),
+                "height": str(page_height),
+                "viewBox": (
+                    f"0 0 "
+                    f"{page_width} "
+                    f"{page_height}"
+                ),
+            },
+        )
+
+        # =================================================
+        # BACKGROUND
+        # =================================================
+
+        ET.SubElement(
+            svg,
+            "rect",
+            {
+                "x": "0",
+                "y": "0",
+                "width": str(page_width),
+                "height": str(page_height),
+                "fill": "#FFFFFF",
+            },
+        )
+
+        # =================================================
+        # TITLE
+        # =================================================
+
+        title = ET.SubElement(
+            svg,
+            "text",
+            {
+                "x": "397",
+                "y": "48",
+                "text-anchor": "middle",
+                "font-family": "Arial",
+                "font-size": "30",
+                "font-weight": "bold",
+                "fill": "#172033",
+            },
+        )
+
+        title.text = "MEWARNAI"
+
+        # =================================================
+        # LAYOUT
+        # =================================================
+
+        # Setiap row mendapat ruang sekitar 315 px.
+        row_height = 315
+
+        row_start_y = 75
+
+        for index, analysis in enumerate(
+            analyses
+        ):
+
+            color_path = analysis[
+                "color_path"
+            ]
+
+            black_path = analysis[
+                "black_path"
+            ]
+
+            color_root = ET.parse(
+                color_path
+            ).getroot()
+
+            black_root = ET.parse(
+                black_path
+            ).getroot()
+
+            row_y = (
+                row_start_y
+                + index * row_height
+            )
+
+            # =================================================
+            # ROW LABEL
+            # =================================================
+
+            example_label = ET.SubElement(
+                svg,
+                "text",
+                {
+                    "x": "170",
+                    "y": str(row_y + 22),
+                    "text-anchor": "middle",
+                    "font-family": "Arial",
+                    "font-size": "15",
+                    "font-weight": "bold",
+                    "fill": "#172033",
+                },
+            )
+
+            example_label.text = "CONTOH"
+
+            coloring_label = ET.SubElement(
+                svg,
+                "text",
+                {
+                    "x": "555",
+                    "y": str(row_y + 22),
+                    "text-anchor": "middle",
+                    "font-family": "Arial",
+                    "font-size": "15",
+                    "font-weight": "bold",
+                    "fill": "#172033",
+                },
+            )
+
+            coloring_label.text = "WARNAI"
+
+            # =================================================
+            # COLOR REFERENCE
+            # =================================================
+
+            color_group = ET.SubElement(
+                svg,
+                "g",
+                {
+                    "transform": (
+                        f"translate(115 "
+                        f"{row_y + 40}) "
+                        "scale(1.45)"
+                    )
+                },
+            )
+
+            for element in color_root:
+
+                color_group.append(
+                    cls._copy_svg_element(
+                        element
+                    )
+                )
+
+            # =================================================
+            # BLACK TARGET
+            # =================================================
+
+            black_group = ET.SubElement(
+                svg,
+                "g",
+                {
+                    "transform": (
+                        f"translate(385 "
+                        f"{row_y + 35}) "
+                        "scale(3.6)"
+                    )
+                },
+            )
+
+            for element in black_root:
+
+                black_group.append(
+                    cls._copy_svg_element(
+                        element
+                    )
+                )
+
+            # =================================================
+            # SEPARATOR
+            # =================================================
+
+            if index < 2:
+
+                ET.SubElement(
+                    svg,
+                    "line",
+                    {
+                        "x1": "55",
+                        "y1": str(
+                            row_y + 292
+                        ),
+                        "x2": "739",
+                        "y2": str(
+                            row_y + 292
+                        ),
+                        "stroke": "#DCE1E8",
+                        "stroke-width": "1",
+                    },
+                )
+
+        # =================================================
+        # INSTRUCTION
+        # =================================================
+
+        instruction = ET.SubElement(
+            svg,
+            "text",
+            {
+                "x": "397",
+                "y": "1015",
+                "text-anchor": "middle",
+                "font-family": "Arial",
+                "font-size": "17",
+                "fill": "#172033",
+            },
+        )
+
+        instruction.text = (
+            "Warnai gambar sesuai contoh."
+        )
+
+        # =================================================
+        # NAME
+        # =================================================
+
+        name_label = ET.SubElement(
+            svg,
+            "text",
+            {
+                "x": "70",
+                "y": "1065",
+                "font-family": "Arial",
+                "font-size": "16",
+                "fill": "#172033",
+            },
+        )
+
+        name_label.text = "Nama:"
+
+        ET.SubElement(
+            svg,
+            "line",
+            {
+                "x1": "125",
+                "y1": "1065",
+                "x2": "500",
+                "y2": "1065",
+                "stroke": "#172033",
+                "stroke-width": "1",
+            },
+        )
+
+        # =================================================
+        # SVG DATA
+        # =================================================
+
+        ET.register_namespace(
+            "",
+            "http://www.w3.org/2000/svg",
+        )
+
+        svg_data = ET.tostring(
+            svg,
+            encoding="utf-8",
+            xml_declaration=True,
+        )
+
+        return {
+            "filenames": list(filenames),
+            "svg_data": svg_data,
+            "analyses": analyses,
         }

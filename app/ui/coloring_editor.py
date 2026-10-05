@@ -1,7 +1,5 @@
-from pathlib import Path
-
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QIcon, QPainter, QPixmap
+from PySide6.QtGui import QPainter, QPixmap
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (
     QFrame,
@@ -14,7 +12,6 @@ from PySide6.QtWidgets import (
 )
 
 from app.services.openmoji_asset import OpenMojiAssetService
-from app.services.coloring_renderer import ColoringRenderer
 from app.ui.asset_picker import AssetPickerDialog
 
 
@@ -31,7 +28,9 @@ class ColoringEditor(QWidget):
         )
 
         self.material_data = {}
-        self.selected_asset = None
+
+        # Menyimpan 3 asset Coloring.
+        self.selected_assets = []
 
         self._setup_ui()
 
@@ -65,7 +64,7 @@ class ColoringEditor(QWidget):
         )
 
         subtitle = QLabel(
-            "Pilih gambar yang akan digunakan sebagai contoh dan gambar mewarnai."
+            "Pilih 3 gambar yang akan digunakan sebagai contoh dan gambar mewarnai."
         )
 
         subtitle.setObjectName(
@@ -146,7 +145,7 @@ class ColoringEditor(QWidget):
         )
 
         asset_description = QLabel(
-            "Pilih satu asset OpenMoji. Asset Color digunakan sebagai contoh, sedangkan asset Black digunakan sebagai gambar untuk diwarnai."
+            "Pilih 3 asset OpenMoji. Asset Color digunakan sebagai contoh, sedangkan asset Black digunakan sebagai gambar untuk diwarnai."
         )
 
         asset_description.setObjectName(
@@ -161,69 +160,111 @@ class ColoringEditor(QWidget):
             asset_description
         )
 
-        # -----------------------------------------------
-        # Asset preview + button
-        # -----------------------------------------------
+        # =================================================
+        # ASSET PREVIEW SLOTS
+        # =================================================
 
-        asset_row = QHBoxLayout()
+        self.asset_previews = []
+        self.asset_name_labels = []
+        self.asset_status_labels = []
 
-        asset_row.setSpacing(20)
+        for index in range(3):
 
-        self.asset_preview = QLabel()
+            slot_layout = QHBoxLayout()
 
-        self.asset_preview.setFixedSize(
-            120,
-            120,
-        )
+            slot_layout.setSpacing(20)
 
-        self.asset_preview.setAlignment(
-            Qt.AlignCenter
-        )
+            preview = QLabel()
 
-        self.asset_preview.setObjectName(
-            "coloringAssetPreview"
-        )
+            preview.setFixedSize(
+                100,
+                100,
+            )
 
-        asset_row.addWidget(
-            self.asset_preview
-        )
+            preview.setAlignment(
+                Qt.AlignCenter
+            )
 
-        asset_info_layout = QVBoxLayout()
+            preview.setObjectName(
+                "coloringAssetPreview"
+            )
 
-        asset_info_layout.setSpacing(8)
+            slot_layout.addWidget(
+                preview
+            )
 
-        self.asset_name_label = QLabel(
-            "Belum ada asset"
-        )
+            info_layout = QVBoxLayout()
 
-        self.asset_name_label.setObjectName(
-            "sectionTitle"
-        )
+            info_layout.setSpacing(6)
 
-        asset_info_layout.addWidget(
-            self.asset_name_label
-        )
+            slot_label = QLabel(
+                f"Asset {index + 1}"
+            )
 
-        self.asset_status_label = QLabel(
-            "Pilih asset OpenMoji untuk mulai."
-        )
+            slot_label.setObjectName(
+                "sectionTitle"
+            )
 
-        self.asset_status_label.setObjectName(
-            "sectionDescription"
-        )
+            info_layout.addWidget(
+                slot_label
+            )
 
-        self.asset_status_label.setWordWrap(
-            True
-        )
+            name_label = QLabel(
+                "Belum ada asset"
+            )
 
-        asset_info_layout.addWidget(
-            self.asset_status_label
-        )
+            name_label.setObjectName(
+                "sectionDescription"
+            )
 
-        asset_info_layout.addStretch()
+            info_layout.addWidget(
+                name_label
+            )
+
+            status_label = QLabel(
+                "Belum dipilih."
+            )
+
+            status_label.setObjectName(
+                "sectionDescription"
+            )
+
+            status_label.setWordWrap(
+                True
+            )
+
+            info_layout.addWidget(
+                status_label
+            )
+
+            info_layout.addStretch()
+
+            slot_layout.addLayout(
+                info_layout
+            )
+
+            asset_layout.addLayout(
+                slot_layout
+            )
+
+            self.asset_previews.append(
+                preview
+            )
+
+            self.asset_name_labels.append(
+                name_label
+            )
+
+            self.asset_status_labels.append(
+                status_label
+            )
+
+        # =================================================
+        # CHOOSE ASSET BUTTON
+        # =================================================
 
         choose_button = QPushButton(
-            "Pilih Asset"
+            "Pilih 3 Asset"
         )
 
         choose_button.setObjectName(
@@ -238,17 +279,9 @@ class ColoringEditor(QWidget):
             self._open_asset_picker
         )
 
-        asset_info_layout.addWidget(
+        asset_layout.addWidget(
             choose_button,
             alignment=Qt.AlignLeft,
-        )
-
-        asset_row.addLayout(
-            asset_info_layout
-        )
-
-        asset_layout.addLayout(
-            asset_row
         )
 
         main_layout.addWidget(
@@ -319,6 +352,7 @@ class ColoringEditor(QWidget):
         self,
         material_data: dict,
     ):
+
         self.material_data = material_data
 
         self.material_info.setText(
@@ -338,18 +372,13 @@ class ColoringEditor(QWidget):
             self
         )
 
-        # Coloring hanya mempunyai 1 target.
         dialog.set_target(
             0,
-            1,
+            3,
         )
 
         dialog.asset_selected.connect(
-            lambda asset_name:
-            self._asset_selected(
-                asset_name,
-                dialog,
-            )
+            self._asset_selected
         )
 
         dialog.exec()
@@ -361,27 +390,47 @@ class ColoringEditor(QWidget):
     def _asset_selected(
         self,
         asset_name: str,
-        dialog: AssetPickerDialog,
     ):
 
-        self.selected_asset = asset_name
+        # Hindari asset yang sama dipakai
+        # lebih dari satu kali.
+        if asset_name in self.selected_assets:
+            QMessageBox.warning(
+                self,
+                "Asset Sudah Dipilih",
+                (
+                    f'Asset "{asset_name}" '
+                    "sudah digunakan.\n\n"
+                    "Silakan pilih asset yang berbeda."
+                ),
+            )
+
+            return
+
+        if len(self.selected_assets) >= 3:
+            return
+
+        self.selected_assets.append(
+            asset_name
+        )
+
+        index = (
+            len(self.selected_assets) - 1
+        )
 
         self._set_asset_preview(
+            index,
+            asset_name,
+        )
+
+        self.asset_name_labels[index].setText(
             asset_name
         )
 
-        self.asset_name_label.setText(
-            asset_name
-        )
-
-        self.asset_status_label.setText(
+        self.asset_status_labels[index].setText(
             "Asset siap digunakan sebagai "
             "reference Color dan target Black."
         )
-
-        # Setelah satu asset dipilih,
-        # picker tidak perlu tetap terbuka.
-        dialog.accept()
 
     # =====================================================
     # ASSET PREVIEW
@@ -389,6 +438,7 @@ class ColoringEditor(QWidget):
 
     def _set_asset_preview(
         self,
+        index: int,
         asset_name: str,
     ):
 
@@ -400,8 +450,8 @@ class ColoringEditor(QWidget):
         )
 
         pixmap = QPixmap(
-            96,
-            96,
+            80,
+            80,
         )
 
         pixmap.fill(
@@ -422,7 +472,7 @@ class ColoringEditor(QWidget):
 
         painter.end()
 
-        self.asset_preview.setPixmap(
+        self.asset_previews[index].setPixmap(
             pixmap
         )
 
@@ -432,19 +482,24 @@ class ColoringEditor(QWidget):
 
     def _preview(self):
 
-        if not self.selected_asset:
+        if len(self.selected_assets) < 3:
 
             QMessageBox.warning(
                 self,
-                "Asset Belum Dipilih",
-                "Pilih asset OpenMoji terlebih dahulu.",
+                "Asset Belum Lengkap",
+                (
+                    "Pilih 3 asset OpenMoji "
+                    "terlebih dahulu."
+                ),
             )
 
             return
 
         coloring_data = {
             **self.material_data,
-            "asset": self.selected_asset,
+            "assets": list(
+                self.selected_assets
+            ),
         }
 
         self.preview_requested.emit(
@@ -458,16 +513,20 @@ class ColoringEditor(QWidget):
     def reset_form(self):
 
         self.material_data = {}
-        self.selected_asset = None
+
+        self.selected_assets = []
 
         self.material_info.clear()
 
-        self.asset_name_label.setText(
-            "Belum ada asset"
-        )
+        for preview in self.asset_previews:
+            preview.clear()
 
-        self.asset_status_label.setText(
-            "Pilih asset OpenMoji untuk mulai."
-        )
+        for label in self.asset_name_labels:
+            label.setText(
+                "Belum ada asset"
+            )
 
-        self.asset_preview.clear()
+        for label in self.asset_status_labels:
+            label.setText(
+                "Belum dipilih."
+            )

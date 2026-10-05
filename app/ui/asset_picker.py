@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QMessageBox,
     QPushButton,
     QScrollArea,
     QVBoxLayout,
@@ -181,7 +182,7 @@ class AssetPickerDialog(QDialog):
         )
 
         self.select_button = QPushButton(
-            "Pilih"
+            "Gunakan Asset"
         )
 
         self.select_button.setObjectName(
@@ -314,7 +315,10 @@ class AssetPickerDialog(QDialog):
             filtered_assets
         )
 
-    def _render_asset(self, asset_path):
+    def _render_asset(
+        self,
+        asset_path,
+    ):
         pixmap = QPixmap(
             64,
             64,
@@ -371,9 +375,33 @@ class AssetPickerDialog(QDialog):
         if not self.selected_asset:
             return
 
-        self.asset_selected.emit(
-            self.selected_asset
+        asset_name = self.selected_asset
+
+        reply = QMessageBox.question(
+            self,
+            "Gunakan Asset?",
+            (
+                f'Gunakan asset "{asset_name}" '
+                f'untuk pasangan '
+                f'{self.target_index + 1} '
+                f'dari {self.total_targets}?'
+            ),
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
         )
+
+        if reply != QMessageBox.Yes:
+            return
+
+        self.asset_selected.emit(
+            asset_name
+        )
+
+        # Pindah ke target berikutnya.
+        if self.target_index < (
+            self.total_targets - 1
+        ):
+            self.target_index += 1
 
         self._clear_selection()
 
@@ -399,7 +427,8 @@ class AssetPickerDialog(QDialog):
 
         self._clear_selection()
         self._update_target_indicator()
-    
+
+
 if __name__ == "__main__":
     import sys
 

@@ -16,7 +16,8 @@ from app.ui.worksheet_preview import WorksheetPreviewDialog
 from app.ui.matching_card_preview import MatchingCardPreviewDialog
 from app.ui.coloring_editor import ColoringEditor
 from app.ui.coloring_preview import ColoringPreviewDialog
-
+from app.ui.maze_editor import MazeEditor
+from app.ui.maze_preview import MazePreviewDialog
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -63,6 +64,7 @@ class MainWindow(QMainWindow):
         self.matching_card_editor = MatchingCardEditor()
         self.worksheet_editor = WorksheetEditor()
         self.coloring_editor = ColoringEditor()
+        self.maze_editor = MazeEditor()
 
         self.pages.addWidget(self.dashboard)
         self.pages.addWidget(self.materials)
@@ -70,6 +72,7 @@ class MainWindow(QMainWindow):
         self.pages.addWidget(self.worksheet_editor)
         self.pages.addWidget(self.matching_card_editor)
         self.pages.addWidget(self.coloring_editor)
+        self.pages.addWidget(self.maze_editor)
 
         # =========================
         # MAIN LAYOUT
@@ -124,6 +127,14 @@ class MainWindow(QMainWindow):
             self._worksheet_preview
         )
 
+        self.maze_editor.back_requested.connect(
+            self._back_to_material_editor
+        )
+
+        self.maze_editor.preview_requested.connect(
+            self._maze_preview
+        )
+
     # =========================
     # PAGE NAVIGATION
     # =========================
@@ -165,6 +176,11 @@ class MainWindow(QMainWindow):
             self.coloring_editor.set_material_data(material_data)
             self.pages.setCurrentWidget(self.coloring_editor)
 
+        elif material_data["activity_type"] == "Maze / Tracing":
+            self.maze_editor.reset_form()
+            self.maze_editor.set_material_data(material_data)
+            self.pages.setCurrentWidget(self.maze_editor)
+
         else:
             QMessageBox.information(
                 self,
@@ -192,12 +208,17 @@ class MainWindow(QMainWindow):
 
         dialog.exec()
 
-    def _coloring_preview(
-        self,
-        coloring_data: dict,
-    ):
+    def _coloring_preview(self, coloring_data: dict,):
         dialog = ColoringPreviewDialog(
             coloring_data,
+            self,
+        )
+
+        dialog.exec()
+
+    def _maze_preview(self, maze_data: dict):
+        dialog = MazePreviewDialog(
+            maze_data,
             self,
         )
 
