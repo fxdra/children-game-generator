@@ -1,12 +1,10 @@
 import shutil
 from pathlib import Path
-
-from PySide6.QtCore import Qt, Signal, QSize
+from PySide6.QtCore import Qt, Signal, QSize, QTimer
 from PySide6.QtGui import QPixmap, QImageReader
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtSvgWidgets import QSvgWidget
 from PySide6.QtWidgets import QSizePolicy
-
 from PySide6.QtWidgets import (
     QComboBox,
     QDoubleSpinBox, 
@@ -28,6 +26,9 @@ from PySide6.QtWidgets import (
 )
 
 from app.services.maze_generator import MazeGenerator
+
+from app.services.tracing_pdf import TracingPDF
+
 from app.ui.asset_picker import AssetPickerDialog
 
 class MazeEditor(QWidget):
@@ -46,7 +47,6 @@ class MazeEditor(QWidget):
     """
     back_requested = Signal()
     preview_requested = Signal(dict)
-    
     # DEFAULT MAZE
     DEFAULT_WIDTH = 180
     DEFAULT_HEIGHT = 240
@@ -54,7 +54,6 @@ class MazeEditor(QWidget):
     DEFAULT_INSTRUCTION = (
         "Bantu karakter menemukan jalan menuju tujuan!"
     )
-    
     # DIFFICULTY PRESETS
     DIFFICULTY_PRESETS = {
         "Mudah": {
@@ -73,7 +72,6 @@ class MazeEditor(QWidget):
             "side_length": 8,
         },
     }
-
     # TRACING ASSET CONFIG
     TRACING_CATEGORIES = {
         "Animal": "animal",
@@ -82,27 +80,31 @@ class MazeEditor(QWidget):
         "Miscellaneous": "miscellaneous",
         "Vehicles": "vehicle",
     }
-
+    TRACING_DEFAULT_INSTRUCTION = (
+        "Ikuti garis putus-putus untuk menggambar objek yang benar!"
+    )
     SUPPORTED_IMAGE_FORMATS = {
         ".png",
         ".jpg",
         ".jpeg",
         ".svg",
     }
-
     TRACING_ASSET_DIR = (
         Path(__file__).resolve().parents[2]
         / "assets"
         / "tracing"
     )
-
     def __init__(self, parent=None):
         super().__init__(parent)
+
         self.material_data = {}
         self.selected_assets = [None, None]
+        self.selected_tracing_asset = None
         self.active_asset_target = 0
         self.activity_type = "Maze"
+
         self._setup_ui()
+
     # MAIN UI
     def _setup_ui(self):
         main_layout = QVBoxLayout(self)
@@ -113,7 +115,6 @@ class MazeEditor(QWidget):
             30,
         )
         main_layout.setSpacing(18)
-        
         # HEADER
         title = QLabel(
             "Buat Maze / Tracing"
@@ -134,7 +135,6 @@ class MazeEditor(QWidget):
         main_layout.addWidget(
             subtitle
         )
-        
         # JENIS AKTIVITAS
         activity_card = QFrame()
         activity_card.setObjectName(
@@ -175,7 +175,6 @@ class MazeEditor(QWidget):
         main_layout.addWidget(
             activity_card
         )
-        
         # CONTENT STACK
         self.activity_stack = QStackedWidget()
         self.maze_page = (
@@ -184,17 +183,42 @@ class MazeEditor(QWidget):
         self.tracing_page = (
             self._create_tracing_page()
         )
+        self.tracing_asset_container.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding,
+        )
+
+        self.tracing_grid.setAlignment(
+            Qt.AlignmentFlag.AlignTop
+        )
         self.activity_stack.addWidget(
             self.maze_page
         )
         self.activity_stack.addWidget(
             self.tracing_page
         )
+        # CONTENT SCROLL AREA
+        self.content_scroll = QScrollArea()
+        self.content_scroll.setWidgetResizable(True)
+        self.content_scroll.setFrameShape(
+            QFrame.Shape.NoFrame
+        )
+        self.content_scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        self.content_scroll.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+
+        self.content_scroll.setWidget(
+            self.activity_stack
+        )
+
         main_layout.addWidget(
-            self.activity_stack,
+            self.content_scroll,
             1,
         )
-        
+
         # FOOTER
         footer = QHBoxLayout()
         self.back_button = QPushButton(
@@ -241,7 +265,6 @@ class MazeEditor(QWidget):
         main_layout.setSpacing(
             18
         )
-        
         # MAZE SETTINGS CARD
         settings_card = QFrame()
         settings_card.setObjectName(
@@ -262,7 +285,6 @@ class MazeEditor(QWidget):
         settings_layout.setHorizontalSpacing(
             20
         )
-        
         # TINGKAT KESULITAN
         self.difficulty_combo = QComboBox()
         self.difficulty_combo.setObjectName(
@@ -283,15 +305,13 @@ class MazeEditor(QWidget):
             ),
             self.difficulty_combo,
         )
-        
         # INSTRUKSI
-        
         self.instruction_input = QLineEdit()
         self.instruction_input.setObjectName(
             "formInput"
         )
         self.instruction_input.setText(
-            self.DEFAULT_INSTRUCTION
+            self.TRACING_DEFAULT_INSTRUCTION
         )
         self.instruction_input.setPlaceholderText(
             "Tulis instruksi untuk anak..."
@@ -302,7 +322,6 @@ class MazeEditor(QWidget):
             ),
             self.instruction_input,
         )
-        
         # CUSTOM SETTINGS
         self.custom_card = QFrame()
         self.custom_card.setObjectName(
@@ -332,7 +351,6 @@ class MazeEditor(QWidget):
         custom_layout.addRow(
             custom_title
         )
-        
         # CUSTOM WIDTH
         self.custom_width_spin = QSpinBox()
         self.custom_width_spin.setRange(
@@ -349,12 +367,14 @@ class MazeEditor(QWidget):
             "formSpinBox"
         )
         custom_layout.addRow(
-            self._form_label(
-                "Lebar Maze"
-            ),
+            self._form_label("Lebar Area Maze"),
             self.custom_width_spin,
         )
-        
+
+        self.custom_width_spin.setToolTip(
+            "Mengatur lebar keseluruhan area Maze dalam milimeter."
+        )
+
         # CUSTOM HEIGHT
         self.custom_height_spin = QSpinBox()
         self.custom_height_spin.setRange(
@@ -371,12 +391,14 @@ class MazeEditor(QWidget):
             "formSpinBox"
         )
         custom_layout.addRow(
-            self._form_label(
-                "Tinggi Maze"
-            ),
+            self._form_label("Tinggi Area Maze"),
             self.custom_height_spin,
         )
-        
+
+        self.custom_height_spin.setToolTip(
+            "Mengatur tinggi keseluruhan area Maze dalam milimeter."
+        )
+
         # CUSTOM CELL SIZE
         self.custom_side_spin = QDoubleSpinBox()
         self.custom_side_spin.setRange(
@@ -399,10 +421,13 @@ class MazeEditor(QWidget):
             "formSpinBox"
         )
         custom_layout.addRow(
-            self._form_label(
-                "Ukuran Cell"
-            ),
+            self._form_label("Ukuran Kotak Jalur"),
             self.custom_side_spin,
+        )
+
+        self.custom_side_spin.setToolTip(
+            "Mengatur besar setiap kotak penyusun jalur Maze. "
+            "Semakin kecil nilainya, semakin rapat jalurnya."
         )
         settings_layout.addRow(
             self.custom_card
@@ -410,7 +435,6 @@ class MazeEditor(QWidget):
         main_layout.addWidget(
             settings_card
         )
-        
         # ASSET CARD
         asset_card = QFrame()
         asset_card.setObjectName(
@@ -429,14 +453,14 @@ class MazeEditor(QWidget):
             12
         )
         asset_title = QLabel(
-            "Asset Maze"
+            "Karakter untuk Maze"
         )
         asset_title.setObjectName(
             "sectionTitle"
         )
         asset_description = QLabel(
-            "Pilih satu asset untuk START dan satu "
-            "asset untuk FINISH."
+            "Pilih satu karakter untuk START dan satu "
+            "karakter untuk FINISH."
         )
         asset_description.setObjectName(
             "materialInfo"
@@ -450,7 +474,6 @@ class MazeEditor(QWidget):
         asset_layout.addWidget(
             asset_description
         )
-        
         # ASSET PREVIEW
         preview_row = QHBoxLayout()
         self.start_preview = (
@@ -474,7 +497,6 @@ class MazeEditor(QWidget):
         asset_layout.addLayout(
             preview_row
         )
-        
         # PICK BUTTON
         self.pick_assets_button = QPushButton(
             "Pilih 2 Asset"
@@ -499,33 +521,26 @@ class MazeEditor(QWidget):
         )
         return page
     
-        # TRACING PAGE
+    # TRACING PAGE
     def _create_tracing_page(self):
         page = QWidget()
-
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(18)
-
         # MAIN CARD
         card = QFrame()
         card.setObjectName("contentCard")
-
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(
             24, 24, 24, 24
         )
         card_layout.setSpacing(16)
-
         # HEADER
         header = QHBoxLayout()
-
         title = QLabel("Tracing")
         title.setObjectName("sectionTitle")
-
         header.addWidget(title)
         header.addStretch()
-
         self.tracing_upload_button = QPushButton(
             "Upload Gambar"
         )
@@ -535,13 +550,10 @@ class MazeEditor(QWidget):
         self.tracing_upload_button.clicked.connect(
             self._upload_tracing_assets
         )
-
         header.addWidget(
             self.tracing_upload_button
         )
-
         card_layout.addLayout(header)
-
         # DESCRIPTION
         description = QLabel(
             "Pilih gambar tracing dari koleksi aset "
@@ -549,34 +561,27 @@ class MazeEditor(QWidget):
         )
         description.setObjectName("materialInfo")
         description.setWordWrap(True)
-
         card_layout.addWidget(description)
-
         # CATEGORY FILTER
         self.tracing_category_combo = QComboBox()
         self.tracing_category_combo.setObjectName(
             "formCombo"
         )
-
         self.tracing_category_combo.addItem(
             "Semua Kategori",
             None,
         )
-
         for label, folder in self.TRACING_CATEGORIES.items():
             self.tracing_category_combo.addItem(
                 label,
                 folder,
             )
-
         self.tracing_category_combo.currentIndexChanged.connect(
             self._refresh_tracing_assets
         )
-
         card_layout.addWidget(
             self.tracing_category_combo
         )
-
         # ASSET COUNT
         self.tracing_asset_count = QLabel(
             "0 gambar"
@@ -584,20 +589,16 @@ class MazeEditor(QWidget):
         self.tracing_asset_count.setObjectName(
             "materialInfo"
         )
-
         card_layout.addWidget(
             self.tracing_asset_count
         )
-
         # SCROLL AREA
         self.tracing_scroll = QScrollArea()
         self.tracing_scroll.setWidgetResizable(True)
         self.tracing_scroll.setFrameShape(
             QFrame.Shape.NoFrame
         )
-
         self.tracing_asset_container = QWidget()
-
         self.tracing_grid = QGridLayout(
             self.tracing_asset_container
         )
@@ -608,178 +609,146 @@ class MazeEditor(QWidget):
         self.tracing_grid.setAlignment(
             Qt.AlignmentFlag.AlignTop
         )
-
         self.tracing_scroll.setWidget(
             self.tracing_asset_container
         )
-
         card_layout.addWidget(
             self.tracing_scroll,
             1,
         )
-
         layout.addWidget(card, 1)
-
         return page
-
-        # TRACING ASSET SCANNER
+    
+    # TRACING ASSET SCANNER
     def _get_tracing_assets(self):
         asset_dir = self.TRACING_ASSET_DIR
-
         if not asset_dir.exists():
             asset_dir.mkdir(
                 parents=True,
                 exist_ok=True,
             )
-
         selected_category = (
             self.tracing_category_combo.currentData()
         )
-
         assets = []
-
         for category_folder in self.TRACING_CATEGORIES.values():
-
             if selected_category and (
                 category_folder != selected_category
             ):
                 continue
-
             folder = asset_dir / category_folder
-
             if not folder.exists():
                 continue
-
             for file_path in folder.rglob("*"):
-
                 if not file_path.is_file():
                     continue
-
                 if (
                     file_path.suffix.lower()
                     not in self.SUPPORTED_IMAGE_FORMATS
                 ):
                     continue
-
                 assets.append({
                     "name": file_path.name,
                     "path": file_path,
                     "category": category_folder,
                 })
-
         return sorted(
             assets,
             key=lambda item: item["name"].lower(),
         )
-
+    
     # TRACING ASSET REFRESH
     def _refresh_tracing_assets(self, *_):
-
         if not hasattr(self, "tracing_grid"):
             return
-
-        # Hapus widget lama
+        # Bersihkan kartu lama
         while self.tracing_grid.count():
-
             item = self.tracing_grid.takeAt(0)
             widget = item.widget()
-
             if widget:
                 widget.deleteLater()
-
         assets = self._get_tracing_assets()
-
         self.tracing_asset_count.setText(
             f"{len(assets)} gambar"
         )
-
         if not assets:
-
             empty_label = QLabel(
                 "Belum ada gambar pada kategori ini."
             )
             empty_label.setAlignment(
                 Qt.AlignmentFlag.AlignCenter
             )
-            empty_label.setObjectName(
-                "materialInfo"
-            )
-
+            empty_label.setObjectName("materialInfo")
             self.tracing_grid.addWidget(
                 empty_label, 0, 0
             )
-
             return
-
-        # Hitung jumlah kolom berdasarkan lebar viewport
+        # Hitung kolom dari lebar viewport terbaru
         viewport_width = (
             self.tracing_scroll.viewport().width()
         )
-
-        min_card_width = 190
+        min_card_width = 180
         spacing = self.tracing_grid.horizontalSpacing()
-
         columns = max(
             1,
-            (viewport_width + spacing)
-            // (min_card_width + spacing)
+            int(
+                (viewport_width + spacing)
+                / (min_card_width + spacing)
+            )
         )
-
-        columns = int(columns)
-
-        # Simpan jumlah kolom terakhir
         self._tracing_columns = columns
-
+        # Reset stretch kolom sebelumnya
+        for column in range(
+            self.tracing_grid.columnCount()
+        ):
+            self.tracing_grid.setColumnStretch(
+                column, 0
+            )
+        # Atur stretch untuk kolom baru
+        for column in range(columns):
+            self.tracing_grid.setColumnStretch(
+                column, 1
+            )
+        # Pastikan container mengikuti lebar viewport
+        self.tracing_asset_container.setMinimumWidth(
+            viewport_width
+        )
+        # Masukkan kartu
         for index, asset in enumerate(assets):
-
             row = index // columns
             column = index % columns
-
             asset_card = self._create_tracing_asset_card(
                 asset
             )
-
+            asset_card.setMinimumWidth(0)
+            asset_card.setMaximumWidth(16777215)
             asset_card.setSizePolicy(
                 QSizePolicy.Policy.Expanding,
                 QSizePolicy.Policy.Fixed,
             )
-
             self.tracing_grid.addWidget(
                 asset_card,
                 row,
                 column,
             )
 
-        # Ratakan lebar kolom
-        for column in range(columns):
-            self.tracing_grid.setColumnStretch(
-                column, 1
-            )
-
     def resizeEvent(self, event):
         super().resizeEvent(event)
         if not hasattr(self, "tracing_scroll"):
             return
-        if not hasattr(self, "tracing_grid"):
-            return
-        viewport_width = (
-            self.tracing_scroll.viewport().width()
-        )
-        min_card_width = 190
-        spacing = self.tracing_grid.horizontalSpacing()
-        columns = max(
-            1,
-            (viewport_width + spacing)
-            // (min_card_width + spacing)
-        )
-        columns = int(columns)
-        if columns != getattr(
-            self,
-            "_tracing_columns",
+        # Tunggu sampai layout selesai menghitung ukuran baru.
+        QTimer.singleShot(
             0,
-        ):
-            self._refresh_tracing_assets()
-
+            self._refresh_tracing_layout
+        )
+    
+    def _refresh_tracing_layout(self):
+        if not hasattr(self, "tracing_scroll"):
+            return
+        if self.activity_type != "Tracing":
+            return
+        self._refresh_tracing_assets()
+    
     # TRACING IMAGE PREVIEW
     def _load_tracing_thumbnail(self, file_path):
         preview_size = QSize(180, 140)
@@ -813,25 +782,29 @@ class MazeEditor(QWidget):
             Qt.AspectRatioMode.KeepAspectRatio,
             Qt.TransformationMode.SmoothTransformation,
         )
-
+    
     # TRACING ASSET CARD
     def _create_tracing_asset_card(self, asset):
-
         card = QFrame()
         card.setObjectName("filterCard")
+        card.setCursor(
+            Qt.CursorShape.PointingHandCursor
+        )
 
+        card.mousePressEvent = (
+            lambda event, selected_asset=asset:
+            self._select_tracing_asset(selected_asset)
+        )
         card.setMinimumWidth(0)
         card.setSizePolicy(
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Fixed,
         )
-
         card_layout = QVBoxLayout(card)
         card_layout.setContentsMargins(
             10, 10, 10, 10
         )
         card_layout.setSpacing(8)
-
         # IMAGE
         image_label = QLabel()
         image_label.setMinimumSize(100, 100)
@@ -843,24 +816,20 @@ class MazeEditor(QWidget):
         image_label.setAlignment(
             Qt.AlignmentFlag.AlignCenter
         )
-
         pixmap = self._load_tracing_thumbnail(
             asset["path"]
         )
-
         if pixmap:
             image_label.setPixmap(pixmap)
         else:
             image_label.setText(
                 "Preview gagal"
             )
-
         card_layout.addWidget(
             image_label,
             0,
             Qt.AlignmentFlag.AlignCenter,
         )
-
         # FILE NAME
         name_label = QLabel(
             asset["name"]
@@ -872,9 +841,7 @@ class MazeEditor(QWidget):
         name_label.setObjectName(
             "formLabel"
         )
-
         card_layout.addWidget(name_label)
-
         # CATEGORY
         category_label = QLabel(
             asset["category"].capitalize()
@@ -885,11 +852,9 @@ class MazeEditor(QWidget):
         category_label.setObjectName(
             "materialInfo"
         )
-
         card_layout.addWidget(
             category_label
         )
-
         # DELETE BUTTON
         delete_button = QPushButton(
             "Hapus"
@@ -897,21 +862,47 @@ class MazeEditor(QWidget):
         delete_button.setObjectName(
             "secondaryButton"
         )
-
         delete_button.clicked.connect(
             lambda checked=False, path=asset["path"]:
             self._delete_tracing_asset(path)
         )
-
         card_layout.addWidget(
             delete_button
         )
-
         return card
 
+    def _select_tracing_asset(self, asset):
+        confirm = QMessageBox.question(
+            self,
+            "Gunakan Gambar Ini?",
+            (
+                f"Apakah kamu ingin menggunakan "
+                f"gambar '{asset['name']}' "
+                f"untuk worksheet Tracing?"
+            ),
+            QMessageBox.StandardButton.Yes
+            | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if confirm != QMessageBox.StandardButton.Yes:
+            return
+
+        self.selected_tracing_asset = asset
+
+        QMessageBox.information(
+            self,
+            "Gambar Dipilih",
+            (
+                f"Gambar '{asset['name']}' "
+                "berhasil dipilih."
+            ),
+        )
+
+        self.preview_button.setEnabled(True)
+    
     # UPLOAD TRACING ASSETS
     def _upload_tracing_assets(self):
-
         files, _ = QFileDialog.getOpenFileNames(
             self,
             "Pilih Gambar Tracing",
@@ -923,15 +914,12 @@ class MazeEditor(QWidget):
                 "SVG (*.svg)"
             ),
         )
-
         if not files:
             return
-
         # Pilih kategori setelah file dipilih
         categories = list(
             self.TRACING_CATEGORIES.keys()
         )
-
         category, accepted = QInputDialog.getItem(
             self,
             "Pilih Kategori",
@@ -940,106 +928,77 @@ class MazeEditor(QWidget):
             0,
             False,
         )
-
         if not accepted:
             return
-
         category_folder = (
             self.TRACING_CATEGORIES[category]
         )
-
         destination = (
             self.TRACING_ASSET_DIR
             / category_folder
         )
-
         destination.mkdir(
             parents=True,
             exist_ok=True,
         )
-
         uploaded = 0
         skipped = []
-
         for file_name in files:
-
             source = Path(file_name)
-
             if (
                 source.suffix.lower()
                 not in self.SUPPORTED_IMAGE_FORMATS
             ):
                 skipped.append(source.name)
                 continue
-
             # Validasi konten gambar
             if source.suffix.lower() == ".svg":
-
                 renderer = QSvgRenderer(str(source))
-
                 if not renderer.isValid():
                     skipped.append(source.name)
                     continue
-
             else:
-
                 reader = QImageReader(str(source))
-
                 if not reader.canRead():
                     skipped.append(source.name)
                     continue
-
             # Hindari menimpa file yang sudah ada
             target = destination / source.name
-
             counter = 1
-
             while target.exists():
-
                 target = destination / (
                     f"{source.stem}_{counter}"
                     f"{source.suffix}"
                 )
-
                 counter += 1
-
             try:
-
                 shutil.copy2(
                     source,
                     target,
                 )
-
                 uploaded += 1
-
             except Exception as error:
-
                 skipped.append(
                     f"{source.name}: {error}"
                 )
-
         # Refresh tampilan
         self._refresh_tracing_assets()
-
         message = (
             f"Berhasil mengunggah {uploaded} gambar."
         )
-
         if skipped:
             message += (
                 "\n\nGambar yang dilewati:\n"
                 + "\n".join(skipped)
             )
-
         QMessageBox.information(
             self,
             "Upload Selesai",
             message,
         )
-
+    
     # DELETE TRACING ASSET
     def _delete_tracing_asset(self, file_path):
-
         confirm = QMessageBox.question(
             self,
             "Hapus Gambar",
@@ -1052,30 +1011,23 @@ class MazeEditor(QWidget):
             | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
         )
-
         if confirm != QMessageBox.StandardButton.Yes:
             return
-
         try:
-
             file_path.unlink()
-
             self._refresh_tracing_assets()
-
             QMessageBox.information(
                 self,
                 "Berhasil",
                 "Gambar berhasil dihapus.",
             )
-
         except Exception as error:
-
             QMessageBox.critical(
                 self,
                 "Gagal Menghapus",
                 str(error),
             )
-    
+
     # ACTIVITY SWITCH
     def _activity_changed(
         self,
@@ -1092,17 +1044,16 @@ class MazeEditor(QWidget):
                 True
             )
         elif activity_type == "Tracing":
-
             self.activity_stack.setCurrentWidget(
                 self.tracing_page
             )
 
             self.preview_button.setEnabled(
-                False
+                self.selected_tracing_asset is not None
             )
 
             self._refresh_tracing_assets()
-
+    
     # DIFFICULTY
     def _difficulty_changed(
         self,
@@ -1114,6 +1065,7 @@ class MazeEditor(QWidget):
         self.custom_card.setVisible(
             is_custom
         )
+    
     def _get_maze_settings(self):
         difficulty = (
             self.difficulty_combo.currentText()
@@ -1146,6 +1098,7 @@ class MazeEditor(QWidget):
                 preset["side_length"]
             ),
         }
+    
     # HELPER
     def _form_label(
         self,
@@ -1158,6 +1111,7 @@ class MazeEditor(QWidget):
             "formLabel"
         )
         return label
+    
     def _create_asset_slot(
         self,
         title,
@@ -1237,7 +1191,7 @@ class MazeEditor(QWidget):
         self.instruction_input.setText(
             self.DEFAULT_INSTRUCTION
         )
-
+    
     # RESET
     def reset_form(self):
         self.material_data = {}
@@ -1283,6 +1237,7 @@ class MazeEditor(QWidget):
         )
         # Assets
         self.selected_assets = [None, None]
+        self.selected_tracing_asset = None
         self.active_asset_target = 0
         self._clear_asset_slot(
             self.start_preview
@@ -1293,6 +1248,7 @@ class MazeEditor(QWidget):
         self.preview_button.setEnabled(
             True
         )
+    
     def _clear_asset_slot(
         self,
         slot,
@@ -1309,10 +1265,11 @@ class MazeEditor(QWidget):
         slot["status"].setText(
             "Belum dipilih"
         )
-
+    
     # ASSET PICKER
     def _open_asset_picker(self):
         self._open_asset_picker_for_target(0)
+    
     def _open_asset_picker_for_target(self, target_index):
         dialog = AssetPickerDialog(self, item_label="Karakter")
         self.active_asset_target = target_index
@@ -1324,6 +1281,7 @@ class MazeEditor(QWidget):
             self._asset_selected
         )
         dialog.exec()
+    
     def _asset_selected(self, asset_name):
         target_index = self.active_asset_target
         # Jangan izinkan START dan FINISH menggunakan
@@ -1361,6 +1319,7 @@ class MazeEditor(QWidget):
             )
         if target_index == 0:
             self.active_asset_target = 1
+    
     def _set_asset_slot(
         self,
         slot,
@@ -1393,10 +1352,35 @@ class MazeEditor(QWidget):
         slot["status"].setText(
             asset_name
         )
+    
     # PREVIEW
     def _preview(self):
-        if self.activity_type != "Maze":
+        # TRACING
+        if self.activity_type == "Tracing":
+            if self.selected_tracing_asset is None:
+                QMessageBox.warning(
+                    self,
+                    "Gambar Belum Dipilih",
+                    "Pilih gambar Tracing terlebih dahulu.",
+                )
+                return
+
+            tracing_data = {
+                **self.material_data,
+                "activity_type": "Maze / Tracing",
+                "sub_activity_type": "Tracing",
+                "title": self.material_data.get(
+                    "title",
+                    "Tracing",
+                ),
+                "instruction": self.TRACING_DEFAULT_INSTRUCTION,
+                "tracing_asset": self.selected_tracing_asset,
+            }
+
+            self.preview_requested.emit(tracing_data)
             return
+
+        # MAZE
         if (
             self.selected_assets[0] is None
             or self.selected_assets[1] is None
@@ -1410,31 +1394,23 @@ class MazeEditor(QWidget):
                 ),
             )
             return
-        maze_settings = (
-            self._get_maze_settings()
-        )
-        instruction = (
-            self.instruction_input.text().strip()
-        )
+
+        maze_settings = self._get_maze_settings()
+
+        instruction = self.instruction_input.text().strip()
+
         if not instruction:
-            instruction = (
-                self.DEFAULT_INSTRUCTION
-            )
+            instruction = self.DEFAULT_INSTRUCTION
+
         try:
             maze_generator = MazeGenerator(
-                width_mm=(
-                    maze_settings["width_mm"]
-                ),
-                height_mm=(
-                    maze_settings["height_mm"]
-                ),
-                side_length_mm=(
-                    maze_settings[
-                        "side_length_mm"
-                    ]
-                ),
+                width_mm=maze_settings["width_mm"],
+                height_mm=maze_settings["height_mm"],
+                side_length_mm=maze_settings["side_length_mm"],
             )
+
             maze_generator.generate()
+
         except Exception as error:
             QMessageBox.critical(
                 self,
@@ -1445,44 +1421,26 @@ class MazeEditor(QWidget):
                 ),
             )
             return
+
         title = self.material_data.get(
             "title",
             "Maze",
         )
+
         maze_data = {
             **self.material_data,
-            # Parent activity
-            "activity_type": (
-                "Maze / Tracing"
-            ),
-            # Sub activity
+            "activity_type": "Maze / Tracing",
             "sub_activity_type": "Maze",
             "title": title,
-            "difficulty": (
-                maze_settings["difficulty"]
-            ),
-            "maze_generator": (
-                maze_generator
-            ),
-            "start_asset": (
-                self.selected_assets[0]
-            ),
-            "finish_asset": (
-                self.selected_assets[1]
-            ),
-            "width_mm": (
-                maze_settings["width_mm"]
-            ),
-            "height_mm": (
-                maze_settings["height_mm"]
-            ),
-            "side_length_mm": (
-                maze_settings[
-                    "side_length_mm"
-                ]
-            ),
+            "difficulty": maze_settings["difficulty"],
+            "maze_generator": maze_generator,
+            "start_asset": self.selected_assets[0],
+            "finish_asset": self.selected_assets[1],
+            "width_mm": maze_settings["width_mm"],
+            "height_mm": maze_settings["height_mm"],
+            "side_length_mm": maze_settings["side_length_mm"],
             "instruction": instruction,
         }
-        self.preview_requested.emit(
-            maze_data
-        )
+
+        self.preview_requested.emit(maze_data)
+        

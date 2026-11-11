@@ -61,10 +61,7 @@ class MazePreviewDialog(QDialog):
             1,
         )
 
-        # ==============================================
         # FOOTER BUTTONS
-        # ==============================================
-
         button_layout = QHBoxLayout()
 
         button_layout.addStretch()

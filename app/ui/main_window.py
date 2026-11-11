@@ -5,7 +5,6 @@ from PySide6.QtWidgets import (
     QStackedWidget,
     QWidget,
 )
-
 from app.ui.dashboard import Dashboard
 from app.ui.material_editor import MaterialEditor
 from app.ui.matching_card_editor import MatchingCardEditor
@@ -18,46 +17,29 @@ from app.ui.coloring_editor import ColoringEditor
 from app.ui.coloring_preview import ColoringPreviewDialog
 from app.ui.maze_editor import MazeEditor
 from app.ui.maze_preview import MazePreviewDialog
+from app.ui.tracing_preview import TracingPreviewDialog
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-
         self.setWindowTitle("Game Edukasi Anak")
         self.resize(1200, 760)
         self.setMinimumSize(1000, 650)
-
         self._setup_ui()
         self._setup_style()
-
+    
     def _setup_ui(self):
-        # =========================
         # CENTRAL WIDGET
-        # =========================
-
         central_widget = QWidget()
         central_widget.setObjectName("centralWidget")
-
         main_layout = QHBoxLayout(central_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
-
-        # =========================
         # SIDEBAR
-        # =========================
-
         self.sidebar = Sidebar()
-
-        # =========================
         # PAGE CONTAINER
-        # =========================
-
         self.pages = QStackedWidget()
-
-        # =========================
         # PAGES
-        # =========================
-
         self.dashboard = Dashboard()
         self.materials = Materials()
         self.material_editor = MaterialEditor()
@@ -65,7 +47,6 @@ class MainWindow(QMainWindow):
         self.worksheet_editor = WorksheetEditor()
         self.coloring_editor = ColoringEditor()
         self.maze_editor = MazeEditor()
-
         self.pages.addWidget(self.dashboard)
         self.pages.addWidget(self.materials)
         self.pages.addWidget(self.material_editor)
@@ -73,114 +54,85 @@ class MainWindow(QMainWindow):
         self.pages.addWidget(self.matching_card_editor)
         self.pages.addWidget(self.coloring_editor)
         self.pages.addWidget(self.maze_editor)
-
-        # =========================
+        
         # MAIN LAYOUT
-        # =========================
-
         main_layout.addWidget(self.sidebar)
         main_layout.addWidget(self.pages, 1)
-
         self.setCentralWidget(central_widget)
-
-        # =========================
+        
         # SIGNALS
-        # =========================
-
         self.sidebar.navigation_changed.connect(
             self._change_page
         )
-
         self.materials.create_requested.connect(
             self._open_material_editor
         )
-
         self.material_editor.back_requested.connect(
             self._back_to_materials
         )
-
         self.material_editor.setup_completed.connect(
             self._material_setup_completed
         )
-
         self.matching_card_editor.back_requested.connect(
             self._back_to_material_editor
         )
-
         self.coloring_editor.back_requested.connect(
             self._back_to_material_editor
         )
-
         self.coloring_editor.preview_requested.connect(
             self._coloring_preview
         )
-
         self.matching_card_editor.preview_requested.connect(
             self._matching_card_preview
         )
-
         self.worksheet_editor.back_requested.connect(
             self._back_to_material_editor
         )
-
         self.worksheet_editor.preview_requested.connect(
             self._worksheet_preview
         )
-
         self.maze_editor.back_requested.connect(
             self._back_to_material_editor
         )
-
         self.maze_editor.preview_requested.connect(
             self._maze_preview
         )
-
-    # =========================
+    
     # PAGE NAVIGATION
-    # =========================
-
     def _change_page(self, page_name: str):
         if page_name == "dashboard":
             self.pages.setCurrentWidget(self.dashboard)
-
         elif page_name == "materials":
             self.pages.setCurrentWidget(self.materials)
-
+    
     def _open_material_editor(self):
         self.material_editor.reset_form()
         self.pages.setCurrentWidget(self.material_editor)
-
+    
     def _back_to_materials(self):
         self.pages.setCurrentWidget(self.materials)
-
+    
     def _back_to_material_editor(self):
         self.pages.setCurrentWidget(self.material_editor)
-
-    # =========================
+    
     # MATERIAL SETUP
-    # =========================
-
     def _material_setup_completed(self, material_data: dict):
         if material_data["activity_type"] == "Worksheet":
             self.worksheet_editor.reset_form()
             self.worksheet_editor.set_material_data(material_data)
             self.pages.setCurrentWidget(self.worksheet_editor)
-
         elif material_data["activity_type"] == "Matching Card":
             self.matching_card_editor.reset_form()
             self.matching_card_editor.set_material_data(material_data)
             self.pages.setCurrentWidget(self.matching_card_editor)
-
         elif material_data["activity_type"] == "Coloring":
             self.coloring_editor.reset_form()
             self.coloring_editor.set_material_data(material_data)
             self.pages.setCurrentWidget(self.coloring_editor)
-
         elif material_data["activity_type"] == "Maze / Tracing":
             self.maze_editor.reset_form()
             self.maze_editor.set_material_data(material_data)
             self.pages.setCurrentWidget(self.maze_editor)
-
         else:
             QMessageBox.information(
                 self,
@@ -191,72 +143,71 @@ class MainWindow(QMainWindow):
                     "belum tersedia."
                 ),
             )
-
+    
     def _worksheet_preview(self, worksheet_data: dict):
         dialog = WorksheetPreviewDialog(
             worksheet_data,
             self,
         )
-
         dialog.exec()
-
+    
     def _matching_card_preview(self, matching_data: dict):
         dialog = MatchingCardPreviewDialog(
             matching_data,
             self,
         )
-
         dialog.exec()
-
+    
     def _coloring_preview(self, coloring_data: dict,):
         dialog = ColoringPreviewDialog(
             coloring_data,
             self,
         )
-
         dialog.exec()
-
+    
     def _maze_preview(self, maze_data: dict):
-        dialog = MazePreviewDialog(
-            maze_data,
-            self,
+        sub_activity = maze_data.get(
+            "sub_activity_type",
+            "Maze",
         )
 
+        if sub_activity == "Tracing":
+            dialog = TracingPreviewDialog(
+                maze_data,
+                self,
+            )
+        else:
+            dialog = MazePreviewDialog(
+                maze_data,
+                self,
+            )
+
         dialog.exec()
 
-    # =========================
     # STYLE
-    # =========================
     def _setup_style(self):
         self.setStyleSheet("""
             QMainWindow {
                 background-color: #F5F7FA;
             }
-
             QWidget#centralWidget {
                 background-color: #F5F7FA;
             }
 
-            /* =========================
-               SIDEBAR
-               ========================= */
-
+            /* SIDEBAR */
             QFrame#sidebar {
                 background-color: #172033;
                 border: none;
             }
-
             QLabel#brand {
                 color: #FFFFFF;
                 font-size: 26px;
                 font-weight: 700;
             }
-
             QLabel#brandSubtitle {
                 color: #9DA8BA;
                 font-size: 12px;
             }
-
             QPushButton#navButton {
                 color: #C7D0DE;
                 background-color: transparent;
@@ -266,33 +217,26 @@ class MainWindow(QMainWindow):
                 text-align: left;
                 font-size: 14px;
             }
-
             QPushButton#navButton:hover {
                 background-color: #222E44;
                 color: #FFFFFF;
             }
-
             QPushButton#navButton:checked {
                 background-color: #30415F;
                 color: #FFFFFF;
                 font-weight: 600;
             }
 
-            /* =========================
-               DASHBOARD
-               ========================= */
-
+            /* DASHBOARD */
             QLabel#pageTitle {
                 color: #172033;
                 font-size: 30px;
                 font-weight: 700;
             }
-
             QLabel#pageSubtitle {
                 color: #6B7688;
                 font-size: 14px;
             }
-
             QPushButton#primaryButton {
                 color: #FFFFFF;
                 background-color: #2F6FED;
@@ -302,77 +246,62 @@ class MainWindow(QMainWindow):
                 font-size: 14px;
                 font-weight: 600;
             }
-
             QPushButton#primaryButton:hover {
                 background-color: #255ED0;
             }
-
             QPushButton#primaryButton:pressed {
                 background-color: #1E4FAF;
             }
-
             QFrame#statCard {
                 background-color: #FFFFFF;
                 border: 1px solid #E3E7ED;
                 border-radius: 10px;
             }
-
             QLabel#statTitle {
                 color: #6B7688;
                 font-size: 13px;
                 font-weight: 600;
             }
-
             QLabel#statValue {
                 color: #172033;
                 font-size: 30px;
                 font-weight: 700;
             }
-
             QLabel#statDescription {
                 color: #9AA4B2;
                 font-size: 12px;
             }
-
             QFrame#contentCard {
                 background-color: #2B2B2B;
                 border: 1px solid #E3E7ED;
                 border-radius: 10px;
             }
-
             QLabel#sectionTitle {
                 color: #FFFFFF;
                 font-size: 17px;
                 font-weight: 700;
             }
-
             QLabel#emptyText {
                 color: #FFFFFF;
                 font-size: 13px;
             }
-
             QLabel#emptyTitle {
                 color: #FFFFFF;
                 font-size: 18px;
                 font-weight: 700;
             }
 
-            /* =========================
-               MATERIALS
-               ========================= */
-
+            /* MATERIALS */
             QLabel#pickerTitle {
                 color: #FFFFFF;
                 font-size: 26px;
                 font-weight: 700;
             }
-
             QFrame#filterCard {
                 background-color: #FFFFFF;
                 border: 1px solid #E3E7ED;
                 border-radius: 10px;
             }
-
             QLineEdit#searchInput {
                 color: #FFFFFF;
                 background-color: #F8F9FB;
@@ -381,12 +310,10 @@ class MainWindow(QMainWindow):
                 padding: 10px 12px;
                 font-size: 13px;
             }
-
             QLineEdit#searchInput:focus {
                 border: 1px solid #2F6FED;
                 background-color: #FFFFFF;
             }
-
             QPushButton#filterButton {
                 color: #4D596B;
                 background-color: #F8F9FB;
@@ -395,27 +322,20 @@ class MainWindow(QMainWindow):
                 padding: 10px 14px;
                 font-size: 13px;
             }
-
             QPushButton#filterButton:hover {
                 background-color: #F0F3F7;
             }
-
             QLabel#emptyTitle {
                 color: #FFFFFF;
                 font-size: 18px;
                 font-weight: 700;
             }
-
-            /* =========================
-               MATERIAL EDITOR
-               ========================= */
-
+            /* MATERIAL EDITOR */
             QLabel#formLabel {
                 color: #FFFFFF;
                 font-size: 13px;
                 font-weight: 600;
             }
-
             QLineEdit#formInput,
             QComboBox#formCombo {
                 color: #FFFFFF;
@@ -426,7 +346,6 @@ class MainWindow(QMainWindow):
                 font-size: 13px;
                 min-height: 18px;
             }
-
             QSpinBox#formSpinBox,
             QDoubleSpinBox#formSpinBox {
                 color: #FFFFFF;
@@ -437,13 +356,11 @@ class MainWindow(QMainWindow):
                 font-size: 13px;
                 min-height: 18px;
             }
-
             QSpinBox#formSpinBox:focus,
             QDoubleSpinBox#formSpinBox:focus {
                 border: 1px solid #2F6FED;
                 background-color: #2B2B2B;
             }
-
             QSpinBox#formSpinBox::up-button,
             QSpinBox#formSpinBox::down-button,
             QDoubleSpinBox#formSpinBox::up-button,
@@ -451,42 +368,35 @@ class MainWindow(QMainWindow):
                 background-color: #2B2B2B;
                 border: none;
             }
-
             QSpinBox#formSpinBox::up-button:hover,
             QSpinBox#formSpinBox::down-button:hover,
             QDoubleSpinBox#formSpinBox::up-button:hover,
             QDoubleSpinBox#formSpinBox::down-button:hover {
                 background-color: #30415F;
             }
-
             QLineEdit#formInput {
                 placeholder-text-color: #9DA8BA;
             }
-
             QComboBox#formCombo {
                 color: #FFFFFF;
             }
-
             QComboBox#formCombo QAbstractItemView {
                 color: #FFFFFF;
                 background-color: #2B2B2B;
                 selection-color: #FFFFFF;
                 selection-background-color: #30415F;
             }
-
             QLineEdit#formInput:focus,
             QComboBox#formCombo:focus {
                 border: 1px solid #2F6FED;
                 background-color: #2B2B2B;
             }
-
             QComboBox QAbstractItemView {
                 background-color: #2B2B2B;
                 color: #FFFFFF;
                 selection-background-color: #30415F;
                 selection-color: #FFFFFF;
             }
-
             QPushButton#secondaryButton {
                 color: #4D596B;
                 background-color: #FFFFFF;
@@ -496,11 +406,9 @@ class MainWindow(QMainWindow):
                 font-size: 14px;
                 font-weight: 600;
             }
-
             QPushButton#secondaryButton:hover {
                 background-color: #F5F7FA;
             }
-
             QPushButton#secondaryButton {
                 color: #4D596B;
                 background-color: #FFFFFF;
@@ -510,11 +418,9 @@ class MainWindow(QMainWindow):
                 font-size: 14px;
                 font-weight: 600;
             }
-
             QPushButton#secondaryButton:hover {
                 background-color: #F5F7FA;
             }
-
             QPushButton#assetPickerButton {
                 color: #172033;
                 background-color: #F8F9FB;
@@ -522,16 +428,13 @@ class MainWindow(QMainWindow):
                 border-radius: 7px;
                 padding: 4px;
             }
-
             QPushButton#assetPickerButton:hover {
                 background-color: #FFFFFF;
                 border: 1px solid #2F6FED;
             }
-
             QPushButton#assetPickerButton:pressed {
                 background-color: #EEF3FF;
             }
-
             QTextEdit#skillsDisplay {
                 background-color: #2B2B2B;
                 color: #5CE65C;
@@ -541,15 +444,11 @@ class MainWindow(QMainWindow):
                 font-size: 14px;
             }
 
-            /* =========================
-            WORKSHEET EDITOR
-            ========================= */
-
+            /* WORKSHEET EDITOR */
             QLabel#materialInfo {
                 color: #4D596B;
                 font-size: 13px;
             }
-
             QTextEdit#formTextEdit {
                 color: #172033;
                 background-color: #F8F9FB;
@@ -558,10 +457,8 @@ class MainWindow(QMainWindow):
                 padding: 10px 12px;
                 font-size: 13px;
             }
-
             QTextEdit#formTextEdit:focus {
                 border: 1px solid #2F6FED;
                 background-color: #FFFFFF;
             }
         """)
-
