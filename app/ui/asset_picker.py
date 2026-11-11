@@ -29,8 +29,11 @@ class AssetPickerDialog(QDialog):
     def __init__(
         self,
         parent=None,
+        item_label="Karakter",
     ):
         super().__init__(parent)
+
+        self.item_label = item_label
 
         self.selected_asset = None
         self.asset_buttons = []
@@ -40,7 +43,7 @@ class AssetPickerDialog(QDialog):
         self.total_targets = 6
 
         self.setWindowTitle(
-            "Pilih Asset"
+            f"Pilih {self.item_label}"
         )
 
         self.resize(
@@ -68,11 +71,11 @@ class AssetPickerDialog(QDialog):
         )
 
         title = QLabel(
-            "Pilih Asset"
+            f"Pilih {self.item_label}"
         )
 
         title.setObjectName(
-            "pageTitle"
+            "pickerTitle"
         )
 
         main_layout.addWidget(
@@ -80,7 +83,6 @@ class AssetPickerDialog(QDialog):
         )
 
         self.target_label = QLabel(
-            "Pasangan 1 dari 6"
         )
 
         self.target_label.setObjectName(
@@ -110,7 +112,7 @@ class AssetPickerDialog(QDialog):
         )
 
         self.search_input.setPlaceholderText(
-            "Cari asset..."
+            f"Cari {self.item_label.lower()}..."
         )
 
         self.search_input.textChanged.connect(
@@ -182,7 +184,7 @@ class AssetPickerDialog(QDialog):
         )
 
         self.select_button = QPushButton(
-            "Gunakan Asset"
+            f"Gunakan {self.item_label}"
         )
 
         self.select_button.setObjectName(
@@ -363,12 +365,49 @@ class AssetPickerDialog(QDialog):
     def _update_target_indicator(self):
         current = self.target_index + 1
 
+        if self.item_label == "Karakter":
+            target_text = (
+                f"Karakter {current} dari "
+                f"{self.total_targets}"
+            )
+
+            description = (
+                "Pilih karakter "
+                f"{self._ordinal(current)}."
+            )
+
+        else:
+            target_text = (
+                f"Pasangan {current} dari "
+                f"{self.total_targets}"
+            )
+
+            description = (
+                "Pilih gambar untuk pasangan "
+                f"nomor {current}."
+            )
+
         self.target_label.setText(
-            f"Pasangan {current} dari {self.total_targets}"
+            target_text
         )
 
         self.target_description.setText(
-            f"Pilih gambar untuk pasangan nomor {current}."
+            description
+        )
+
+    def _ordinal(self, number):
+        names = {
+            1: "pertama",
+            2: "kedua",
+            3: "ketiga",
+            4: "keempat",
+            5: "kelima",
+            6: "keenam",
+        }
+
+        return names.get(
+            number,
+            f"nomor {number}",
         )
 
     def _confirm_selection(self):
@@ -379,12 +418,12 @@ class AssetPickerDialog(QDialog):
 
         reply = QMessageBox.question(
             self,
-            "Gunakan Asset?",
+            f"Gunakan {self.item_label}?",
             (
-                f'Gunakan asset "{asset_name}" '
-                f'untuk pasangan '
-                f'{self.target_index + 1} '
-                f'dari {self.total_targets}?'
+                f'Gunakan {self.item_label.lower()} '
+                f'"{asset_name}" '
+                f'untuk '
+                f'{self._target_confirmation_text()}?'
             ),
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
@@ -404,6 +443,20 @@ class AssetPickerDialog(QDialog):
             self.target_index += 1
 
         self._clear_selection()
+
+    def _target_confirmation_text(self):
+        current = self.target_index + 1
+
+        if self.item_label == "Karakter":
+            return (
+                f"karakter {current} "
+                f"dari {self.total_targets}"
+            )
+
+        return (
+            f"pasangan {current} "
+            f"dari {self.total_targets}"
+        )
 
     def _clear_selection(self):
         self.selected_asset = None

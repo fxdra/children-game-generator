@@ -361,6 +361,12 @@ class MainWindow(QMainWindow):
                MATERIALS
                ========================= */
 
+            QLabel#pickerTitle {
+                color: #FFFFFF;
+                font-size: 26px;
+                font-weight: 700;
+            }
+
             QFrame#filterCard {
                 background-color: #FFFFFF;
                 border: 1px solid #E3E7ED;
@@ -419,6 +425,38 @@ class MainWindow(QMainWindow):
                 padding: 10px 12px;
                 font-size: 13px;
                 min-height: 18px;
+            }
+
+            QSpinBox#formSpinBox,
+            QDoubleSpinBox#formSpinBox {
+                color: #FFFFFF;
+                background-color: #2B2B2B;
+                border: 1px solid #DCE1E8;
+                border-radius: 7px;
+                padding: 10px 12px;
+                font-size: 13px;
+                min-height: 18px;
+            }
+
+            QSpinBox#formSpinBox:focus,
+            QDoubleSpinBox#formSpinBox:focus {
+                border: 1px solid #2F6FED;
+                background-color: #2B2B2B;
+            }
+
+            QSpinBox#formSpinBox::up-button,
+            QSpinBox#formSpinBox::down-button,
+            QDoubleSpinBox#formSpinBox::up-button,
+            QDoubleSpinBox#formSpinBox::down-button {
+                background-color: #2B2B2B;
+                border: none;
+            }
+
+            QSpinBox#formSpinBox::up-button:hover,
+            QSpinBox#formSpinBox::down-button:hover,
+            QDoubleSpinBox#formSpinBox::up-button:hover,
+            QDoubleSpinBox#formSpinBox::down-button:hover {
+                background-color: #30415F;
             }
 
             QLineEdit#formInput {
