@@ -107,11 +107,7 @@ class WorksheetEditor(QWidget):
 
         self.worksheet_type_combo.addItems([
             "Menghitung",
-            "Mencocokkan",
             "Memilih Jawaban",
-            "Mewarnai",
-            "Menarik Garis",
-            "Menghubungkan Titik",
             "Menulis / Tracing",
         ])
 

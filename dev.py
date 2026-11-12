@@ -57,7 +57,7 @@ observer = Observer()
 observer.schedule(handler, str(ROOT / "app"), recursive=True)
 observer.start()
 
-print("GameAnak Auto Reload aktif.")
+print("Worksheet Generator Auto Reload aktif.")
 print("Simpan file Python untuk memuat ulang aplikasi.")
 print("Tekan CTRL+C untuk berhenti.")
 
