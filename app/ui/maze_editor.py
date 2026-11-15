@@ -33,7 +33,7 @@ from app.ui.asset_picker import AssetPickerDialog
 
 class MazeEditor(QWidget):
     """
-    Editor parent untuk aktivitas Maze / Tracing.
+    Editor utama untuk aktivitas Maze dengan pilihan mode Maze atau Tracing.
     Saat ini:
     - Maze tersedia
     - Tracing masih placeholder
@@ -117,7 +117,7 @@ class MazeEditor(QWidget):
         main_layout.setSpacing(18)
         # HEADER
         title = QLabel(
-            "Buat Maze / Tracing"
+            "Buat Maze"
         )
         title.setObjectName(
             "pageTitle"
@@ -1367,7 +1367,7 @@ class MazeEditor(QWidget):
 
             tracing_data = {
                 **self.material_data,
-                "activity_type": "Maze / Tracing",
+                "activity_type": "Maze",
                 "sub_activity_type": "Tracing",
                 "title": self.material_data.get(
                     "title",
@@ -1429,7 +1429,7 @@ class MazeEditor(QWidget):
 
         maze_data = {
             **self.material_data,
-            "activity_type": "Maze / Tracing",
+            "activity_type": "Maze",
             "sub_activity_type": "Maze",
             "title": title,
             "difficulty": maze_settings["difficulty"],

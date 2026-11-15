@@ -19,7 +19,7 @@ SKILL_MAPPING = {
             "Memori",
             "Berhitung",
         ],
-        "Maze / Tracing": [
+        "Maze": [
             "Urutan Angka",
             "Counting Sequence",
             "Koordinasi Mata-Tangan",
@@ -77,7 +77,7 @@ SKILL_MAPPING = {
             "Visual Association",
             "Memori",
         ],
-        "Maze / Tracing": [
+        "Maze": [
             "Tracing Huruf",
             "Koordinasi Mata-Tangan",
             "Pengenalan Bentuk Huruf",
@@ -134,7 +134,7 @@ SKILL_MAPPING = {
             "Memori",
             "Konsentrasi",
         ],
-        "Maze / Tracing": [
+        "Maze": [
             "Mengikuti Pola",
             "Visual Tracking",
             "Koordinasi Mata-Tangan",
@@ -190,7 +190,7 @@ SKILL_MAPPING = {
             "Memori",
             "Ketelitian",
         ],
-        "Maze / Tracing": [
+        "Maze": [
             "Mengikuti Pola",
             "Pengenalan Bentuk",
             "Visual Tracking",
@@ -247,7 +247,7 @@ SKILL_MAPPING = {
             "Memori",
             "Konsentrasi",
         ],
-        "Maze / Tracing": [
+        "Maze": [
             "Visual Tracking",
             "Koordinasi Mata-Tangan",
             "Motorik Halus",
@@ -304,7 +304,7 @@ SKILL_MAPPING = {
             "Visual Matching",
             "Memori",
         ],
-        "Maze / Tracing": [
+        "Maze": [
             "Kontrol Pensil",
             "Koordinasi Mata-Tangan",
             "Visual Tracking",
@@ -361,7 +361,7 @@ SKILL_MAPPING = {
             "Visual Association",
             "Konsentrasi",
         ],
-        "Maze / Tracing": [
+        "Maze": [
             "Problem Solving",
             "Visual-Spatial",
             "Planning Sederhana",
@@ -416,7 +416,7 @@ SKILL_MAPPING = {
             "Visual Association",
             "Memori",
         ],
-        "Maze / Tracing": [
+        "Maze": [
             "Mengikuti Rute",
             "Planning Sederhana",
             "Koordinasi Mata-Tangan",
@@ -460,7 +460,7 @@ WEIGHT_MAPPING = {
         "Worksheet": [5, 5, 4, 3, 3],
         "Flashcard": [5, 4, 4, 3],
         "Matching Card": [5, 4, 4, 3],
-        "Maze / Tracing": [5, 4, 4, 3],
+        "Maze": [5, 4, 4, 3],
         "Coloring": [5, 4, 3, 4, 3],
         "Puzzle": [5, 5, 4, 3],
         "Board Game": [5, 4, 4],
@@ -472,7 +472,7 @@ WEIGHT_MAPPING = {
         "Worksheet": [5, 5, 4, 4, 3],
         "Flashcard": [5, 5, 4, 3],
         "Matching Card": [5, 5, 4, 3],
-        "Maze / Tracing": [5, 4, 4, 3],
+        "Maze": [5, 4, 4, 3],
         "Coloring": [4, 5, 3, 4],
         "Puzzle": [5, 4, 4, 3],
         "Board Game": [5, 4, 4, 3],
@@ -484,7 +484,7 @@ WEIGHT_MAPPING = {
         "Worksheet": [5, 4, 5, 3],
         "Flashcard": [5, 4, 4, 3],
         "Matching Card": [5, 4, 4, 3],
-        "Maze / Tracing": [5, 4, 4],
+        "Maze": [5, 4, 4],
         "Coloring": [5, 4, 4, 3],
         "Puzzle": [5, 4, 4, 3],
         "Board Game": [5, 4, 4, 3],
@@ -496,7 +496,7 @@ WEIGHT_MAPPING = {
         "Worksheet": [5, 4, 4, 3],
         "Flashcard": [5, 4, 3, 4],
         "Matching Card": [5, 4, 4, 3],
-        "Maze / Tracing": [5, 4, 4, 3],
+        "Maze": [5, 4, 4, 3],
         "Coloring": [5, 4, 4, 4],
         "Puzzle": [5, 5, 4, 3],
         "Board Game": [5, 4, 4, 3],
@@ -508,7 +508,7 @@ WEIGHT_MAPPING = {
         "Worksheet": [5, 4, 4, 3],
         "Flashcard": [5, 5, 4, 4],
         "Matching Card": [5, 4, 4, 3],
-        "Maze / Tracing": [5, 4, 4, 3],
+        "Maze": [5, 4, 4, 3],
         "Coloring": [5, 4, 4, 3],
         "Puzzle": [5, 4, 4, 3],
         "Board Game": [5, 4, 4, 3],
@@ -520,7 +520,7 @@ WEIGHT_MAPPING = {
         "Worksheet": [5, 5, 4, 3],
         "Flashcard": [5, 4, 4, 3],
         "Matching Card": [5, 5, 4, 3],
-        "Maze / Tracing": [5, 5, 4, 3],
+        "Maze": [5, 5, 4, 3],
         "Coloring": [5, 5, 4, 3],
         "Puzzle": [5, 4, 4, 3],
         "Board Game": [5, 4, 4, 3],
@@ -532,7 +532,7 @@ WEIGHT_MAPPING = {
         "Worksheet": [5, 5, 4, 4],
         "Flashcard": [5, 4, 4, 3],
         "Matching Card": [5, 4, 4, 3],
-        "Maze / Tracing": [5, 5, 4, 3],
+        "Maze": [5, 5, 4, 3],
         "Coloring": [5, 4, 4, 3],
         "Puzzle": [5, 5, 4, 3],
         "Board Game": [5, 5, 4, 3],
@@ -544,7 +544,7 @@ WEIGHT_MAPPING = {
         "Worksheet": [5, 4, 4],
         "Flashcard": [5, 4, 4, 3],
         "Matching Card": [5, 4, 4],
-        "Maze / Tracing": [5, 4, 4, 4],
+        "Maze": [5, 4, 4, 4],
         "Coloring": [5, 4, 3],
         "Puzzle": [5, 4, 4],
         "Board Game": [5, 5, 4, 4, 3],

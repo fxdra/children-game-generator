@@ -116,7 +116,7 @@ class MaterialEditor(QWidget):
             "Worksheet",
             "Flashcard",
             "Matching Card",
-            "Maze / Tracing",
+            "Maze",
             "Coloring",
             "Puzzle",
             "Board Game",

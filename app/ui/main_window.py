@@ -18,6 +18,7 @@ from app.ui.coloring_preview import ColoringPreviewDialog
 from app.ui.maze_editor import MazeEditor
 from app.ui.maze_preview import MazePreviewDialog
 from app.ui.tracing_preview import TracingPreviewDialog
+from app.services.content_service import ContentService
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -25,6 +26,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Game Edukasi Anak")
         self.resize(1200, 760)
         self.setMinimumSize(1000, 650)
+        self.content_service = ContentService()
         self._setup_ui()
         self._setup_style()
     
@@ -129,7 +131,7 @@ class MainWindow(QMainWindow):
             self.coloring_editor.reset_form()
             self.coloring_editor.set_material_data(material_data)
             self.pages.setCurrentWidget(self.coloring_editor)
-        elif material_data["activity_type"] == "Maze / Tracing":
+        elif material_data["activity_type"] == "Maze":
             self.maze_editor.reset_form()
             self.maze_editor.set_material_data(material_data)
             self.pages.setCurrentWidget(self.maze_editor)
@@ -144,7 +146,29 @@ class MainWindow(QMainWindow):
                 ),
             )
     
+    def _save_to_content_library(self, payload: dict):
+        """Persist a valid editor payload without blocking its preview."""
+        try:
+            record, created = self.content_service.create_custom_content(payload)
+            message = (
+                f"Konten tersimpan di Library: {record['title']}"
+                if created
+                else f"Konten sudah tersedia di Library: {record['title']}"
+            )
+            self.statusBar().showMessage(message, 5000)
+        except Exception as error:
+            QMessageBox.warning(
+                self,
+                "Library Tidak Dapat Menyimpan",
+                (
+                    "Preview tetap akan dibuka, tetapi konten belum "
+                    "berhasil disimpan ke Shared Content Library.\n\n"
+                    f"{error}"
+                ),
+            )
+
     def _worksheet_preview(self, worksheet_data: dict):
+        self._save_to_content_library(worksheet_data)
         dialog = WorksheetPreviewDialog(
             worksheet_data,
             self,
@@ -152,6 +176,7 @@ class MainWindow(QMainWindow):
         dialog.exec()
     
     def _matching_card_preview(self, matching_data: dict):
+        self._save_to_content_library(matching_data)
         dialog = MatchingCardPreviewDialog(
             matching_data,
             self,
@@ -159,6 +184,7 @@ class MainWindow(QMainWindow):
         dialog.exec()
     
     def _coloring_preview(self, coloring_data: dict,):
+        self._save_to_content_library(coloring_data)
         dialog = ColoringPreviewDialog(
             coloring_data,
             self,
@@ -166,6 +192,7 @@ class MainWindow(QMainWindow):
         dialog.exec()
     
     def _maze_preview(self, maze_data: dict):
+        self._save_to_content_library(maze_data)
         sub_activity = maze_data.get(
             "sub_activity_type",
             "Maze",

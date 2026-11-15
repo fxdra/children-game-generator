@@ -1,0 +1,243 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "2c38c3a6-2e99-46dd-a212-8575e6fdacd0",
+      "title": "Labirin",
+      "category": "Bentuk",
+      "activity_type": "Maze",
+      "age": "5 Tahun",
+      "payload": {
+        "activity_type": "Maze",
+        "age": "5 Tahun",
+        "category": "Bentuk",
+        "difficulty": "Sulit",
+        "finish_asset": "1F329",
+        "height_mm": 240.0,
+        "instruction": "Bantu karakter menemukan jalan menuju tujuan!",
+        "side_length_mm": 8.0,
+        "start_asset": "1F320",
+        "sub_activity_type": "Maze",
+        "title": "Labirin",
+        "width_mm": 180.0
+      },
+      "fingerprint": "f0d9885eccd6cb40e19a24fb934fd312aafa45181d84e29e1ed4cdf537ea61f0",
+      "status": "active",
+      "source": "custom",
+      "updated_at": "2026-11-14T08:22:33+00:00",
+      "created_at": "2026-11-14T08:22:33+00:00"
+    },
+    {
+      "id": "5d44ad66-429f-4a31-bda2-95ebec9a233e",
+      "title": "A",
+      "category": "Numerasi",
+      "activity_type": "Worksheet",
+      "age": "5 Tahun",
+      "payload": {
+        "activity_title": "A",
+        "activity_type": "Worksheet",
+        "age": "5 Tahun",
+        "answer": "8",
+        "category": "Numerasi",
+        "instruction": "Kerjakan soal dengan teliti!",
+        "options": [
+          "8",
+          "9",
+          "12"
+        ],
+        "question": "Berapa hasil dari 3 + 5",
+        "title": "A",
+        "worksheet_type": "Memilih Jawaban"
+      },
+      "fingerprint": "207c3ce74f48d9a7b6570dadf073a621df42fb75723decfcef5ce7901bf12ec1",
+      "status": "active",
+      "source": "custom",
+      "updated_at": "2026-11-14T08:31:23+00:00",
+      "created_at": "2026-11-14T08:31:23+00:00"
+    },
+    {
+      "id": "45a647a2-76ea-4ebf-841c-8fab55994956",
+      "title": "A",
+      "category": "Numerasi",
+      "activity_type": "Worksheet",
+      "age": "5 Tahun",
+      "payload": {
+        "activity_title": "A",
+        "activity_type": "Worksheet",
+        "age": "5 Tahun",
+        "category": "Numerasi",
+        "instruction": "Kerjakan soal dengan teliti!",
+        "question": "Tebalkan angka berikut",
+        "title": "A",
+        "tracing_text": "8 9 2",
+        "worksheet_type": "Menulis / Tracing"
+      },
+      "fingerprint": "d160f88a72260e8f7c9de0368936fb60dcefc3395d1a24bb62bcf2d8dc0a5eb9",
+      "status": "active",
+      "source": "custom",
+      "updated_at": "2026-11-14T08:31:50+00:00",
+      "created_at": "2026-11-14T08:31:50+00:00"
+    },
+    {
+      "id": "e803c094-2290-4c89-b09f-e8eb4a95556c",
+      "title": "A",
+      "category": "Numerasi",
+      "activity_type": "Worksheet",
+      "age": "5 Tahun",
+      "payload": {
+        "activity_title": "A",
+        "activity_type": "Worksheet",
+        "age": "5 Tahun",
+        "answer": "10",
+        "category": "Numerasi",
+        "instruction": "Kerjakan dengan teliti!",
+        "question": "Ada berapa apel?",
+        "title": "A",
+        "worksheet_type": "Menghitung"
+      },
+      "fingerprint": "6f6c3a669dd715ac183d5af9ecae014bd1fe0bf97bc4db9511dfa6c4d80e61a2",
+      "status": "active",
+      "source": "custom",
+      "updated_at": "2026-11-14T08:37:37+00:00",
+      "created_at": "2026-11-14T08:37:37+00:00"
+    },
+    {
+      "id": "2fc76106-29c0-4e8a-9a36-c0b62e5d8228",
+      "title": "A",
+      "category": "Numerasi",
+      "activity_type": "Worksheet",
+      "age": "5 Tahun",
+      "payload": {
+        "activity_title": "A",
+        "activity_type": "Worksheet",
+        "age": "5 Tahun",
+        "answer": "6",
+        "category": "Numerasi",
+        "instruction": "Kerjakan dengan teliti!",
+        "question": "Ada berapa apel?",
+        "title": "A",
+        "worksheet_type": "Menghitung"
+      },
+      "fingerprint": "0870af571ed0bb1a4329c6a834bdb4f4debc039adbe3916e2883466a6c2ba759",
+      "status": "active",
+      "source": "custom",
+      "updated_at": "2026-11-14T08:38:29+00:00",
+      "created_at": "2026-11-14T08:38:29+00:00"
+    },
+    {
+      "id": "3d23ab91-e9c4-4d73-b0e7-744d9197fb2e",
+      "title": "A",
+      "category": "Numerasi",
+      "activity_type": "Worksheet",
+      "age": "5 Tahun",
+      "payload": {
+        "activity_title": "A",
+        "activity_type": "Worksheet",
+        "age": "5 Tahun",
+        "answer": "7",
+        "category": "Numerasi",
+        "instruction": "Kerjakan dengan teliti!",
+        "question": "Ada berapa apel?",
+        "title": "A",
+        "worksheet_type": "Menghitung"
+      },
+      "fingerprint": "b0f87d4516901c9a90b2984d89ecd739d96c01b8a3fa707a4409df01992c9b51",
+      "status": "active",
+      "source": "custom",
+      "updated_at": "2026-11-14T08:38:33+00:00",
+      "created_at": "2026-11-14T08:38:33+00:00"
+    },
+    {
+      "id": "6919ebce-824f-4cbc-ad13-504e5501514d",
+      "title": "A",
+      "category": "Numerasi",
+      "activity_type": "Worksheet",
+      "age": "5 Tahun",
+      "payload": {
+        "activity_title": "A",
+        "activity_type": "Worksheet",
+        "age": "5 Tahun",
+        "answer": "8",
+        "category": "Numerasi",
+        "instruction": "Kerjakan dengan teliti!",
+        "question": "Ada berapa apel?",
+        "title": "A",
+        "worksheet_type": "Menghitung"
+      },
+      "fingerprint": "35e3f07e14ccc978b657303ba691dc5733135602f2fc58399ad4e4885b15ae09",
+      "status": "active",
+      "source": "custom",
+      "updated_at": "2026-11-14T08:38:38+00:00",
+      "created_at": "2026-11-14T08:38:38+00:00"
+    },
+    {
+      "id": "991accb3-0719-4780-a985-c49afe144f19",
+      "title": "A",
+      "category": "Numerasi",
+      "activity_type": "Worksheet",
+      "age": "5 Tahun",
+      "payload": {
+        "activity_title": "A",
+        "activity_type": "Worksheet",
+        "age": "5 Tahun",
+        "answer": "9",
+        "category": "Numerasi",
+        "instruction": "Kerjakan dengan teliti!",
+        "question": "Ada berapa apel?",
+        "title": "A",
+        "worksheet_type": "Menghitung"
+      },
+      "fingerprint": "dccc30341497fc51444bf34f7ef09ac740c2112cca3a47391f2c431fa0361bae",
+      "status": "active",
+      "source": "custom",
+      "updated_at": "2026-11-14T08:38:45+00:00",
+      "created_at": "2026-11-14T08:38:45+00:00"
+    },
+    {
+      "id": "746fd592-6f3e-4eeb-8817-151569be9b02",
+      "title": "Menghitung",
+      "category": "Numerasi",
+      "activity_type": "Worksheet",
+      "age": "5 Tahun",
+      "payload": {
+        "activity_title": "Menghitung",
+        "activity_type": "Worksheet",
+        "age": "5 Tahun",
+        "answer": "7",
+        "category": "Numerasi",
+        "instruction": "A",
+        "question": "Ada berapa apel?",
+        "title": "Menghitung",
+        "worksheet_type": "Menghitung"
+      },
+      "fingerprint": "179e2ad6de26280a5e32fc4d088c97a9b9e53355ebe649207868415319bf796f",
+      "status": "active",
+      "source": "custom",
+      "updated_at": "2026-11-14T08:43:26+00:00",
+      "created_at": "2026-11-14T08:43:26+00:00"
+    },
+    {
+      "id": "99dafa27-cb53-403f-aef7-3a958853f510",
+      "title": "Menghitung Jumlah Apel",
+      "category": "Numerasi",
+      "activity_type": "Worksheet",
+      "age": "5 Tahun",
+      "payload": {
+        "activity_title": "Menghitung Jumlah Apel",
+        "activity_type": "Worksheet",
+        "age": "5 Tahun",
+        "answer": "14",
+        "category": "Numerasi",
+        "instruction": "Kerjakan aktivitas berikut.",
+        "question": "Apel",
+        "title": "Menghitung Jumlah Apel",
+        "worksheet_type": "Menghitung"
+      },
+      "fingerprint": "760b4e9fd8f8ecd23c3be2af173b394c1a67bd98190b84856ec099b21c36c118",
+      "status": "active",
+      "source": "custom",
+      "updated_at": "2026-11-14T08:55:40+00:00",
+      "created_at": "2026-11-14T08:55:40+00:00"
+    }
+  ]
+}
