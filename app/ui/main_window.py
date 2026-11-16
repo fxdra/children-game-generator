@@ -5,19 +5,22 @@ from PySide6.QtWidgets import (
     QStackedWidget,
     QWidget,
 )
+
+from app.core.activity_router import ActivityRouter
 from app.ui.dashboard import Dashboard
 from app.ui.material_editor import MaterialEditor
-from app.ui.matching_card_editor import MatchingCardEditor
+from app.ui.bahasa_matching_card_editor import BahasaMatchingCardEditor
 from app.ui.materials import Materials
 from app.ui.sidebar import Sidebar
 from app.ui.worksheet_editor import WorksheetEditor
 from app.ui.worksheet_preview import WorksheetPreviewDialog
-from app.ui.matching_card_preview import MatchingCardPreviewDialog
+from app.ui.bahasa_matching_card_preview import MatchingCardPreviewDialog
 from app.ui.coloring_editor import ColoringEditor
 from app.ui.coloring_preview import ColoringPreviewDialog
 from app.ui.maze_editor import MazeEditor
 from app.ui.maze_preview import MazePreviewDialog
 from app.ui.tracing_preview import TracingPreviewDialog
+from app.ui.flashcard_preview import FlashcardPreviewDialog
 from app.services.content_service import ContentService
 
 class MainWindow(QMainWindow):
@@ -27,6 +30,9 @@ class MainWindow(QMainWindow):
         self.resize(1200, 760)
         self.setMinimumSize(1000, 650)
         self.content_service = ContentService()
+        self.content_service = ContentService()
+        self.activity_router = ActivityRouter()
+
         self._setup_ui()
         self._setup_style()
     
@@ -45,7 +51,7 @@ class MainWindow(QMainWindow):
         self.dashboard = Dashboard()
         self.materials = Materials()
         self.material_editor = MaterialEditor()
-        self.matching_card_editor = MatchingCardEditor()
+        self.bahasa_matching_card_editor = BahasaMatchingCardEditor()
         self.worksheet_editor = WorksheetEditor()
         self.coloring_editor = ColoringEditor()
         self.maze_editor = MazeEditor()
@@ -53,7 +59,7 @@ class MainWindow(QMainWindow):
         self.pages.addWidget(self.materials)
         self.pages.addWidget(self.material_editor)
         self.pages.addWidget(self.worksheet_editor)
-        self.pages.addWidget(self.matching_card_editor)
+        self.pages.addWidget(self.bahasa_matching_card_editor)
         self.pages.addWidget(self.coloring_editor)
         self.pages.addWidget(self.maze_editor)
         
@@ -75,7 +81,7 @@ class MainWindow(QMainWindow):
         self.material_editor.setup_completed.connect(
             self._material_setup_completed
         )
-        self.matching_card_editor.back_requested.connect(
+        self.bahasa_matching_card_editor.back_requested.connect(
             self._back_to_material_editor
         )
         self.coloring_editor.back_requested.connect(
@@ -84,7 +90,7 @@ class MainWindow(QMainWindow):
         self.coloring_editor.preview_requested.connect(
             self._coloring_preview
         )
-        self.matching_card_editor.preview_requested.connect(
+        self.bahasa_matching_card_editor.preview_requested.connect(
             self._matching_card_preview
         )
         self.worksheet_editor.back_requested.connect(
@@ -117,35 +123,73 @@ class MainWindow(QMainWindow):
     def _back_to_material_editor(self):
         self.pages.setCurrentWidget(self.material_editor)
     
+    
     # MATERIAL SETUP
     def _material_setup_completed(self, material_data: dict):
-        if material_data["activity_type"] == "Worksheet":
+        category = material_data.get("category")
+        activity_type = material_data.get("activity_type")
+
+        # Validasi kategori dan aktivitas melalui ActivityRouter
+        route = self.activity_router.resolve(
+            category,
+            activity_type,
+        )
+
+        if not route["valid"]:
+            QMessageBox.information(
+                self,
+                "Aktivitas Tidak Dikenali",
+                (
+                    f"Kategori: '{category}'\n"
+                    f"Aktivitas: '{activity_type}'\n\n"
+                    "Aktivitas tersebut belum terdaftar "
+                    "di Activity Router."
+                ),
+            )
+            return
+
+        route_key = route["route"]
+
+        # ROUTING EDITOR
+        if route_key.endswith(":Worksheet"):
             self.worksheet_editor.reset_form()
             self.worksheet_editor.set_material_data(material_data)
             self.pages.setCurrentWidget(self.worksheet_editor)
-        elif material_data["activity_type"] == "Matching Card":
-            self.matching_card_editor.reset_form()
-            self.matching_card_editor.set_material_data(material_data)
-            self.pages.setCurrentWidget(self.matching_card_editor)
-        elif material_data["activity_type"] == "Coloring":
+
+        elif route_key == "Bahasa:Matching Card":
+            self.bahasa_matching_card_editor.reset_form()
+            self.bahasa_matching_card_editor.set_material_data(
+                material_data
+            )
+            self.pages.setCurrentWidget(
+                self.bahasa_matching_card_editor
+            )
+
+        elif route_key.endswith(":Coloring"):
             self.coloring_editor.reset_form()
             self.coloring_editor.set_material_data(material_data)
             self.pages.setCurrentWidget(self.coloring_editor)
-        elif material_data["activity_type"] == "Maze":
+
+        elif route_key.endswith(":Maze / Tracing"):
             self.maze_editor.reset_form()
             self.maze_editor.set_material_data(material_data)
             self.pages.setCurrentWidget(self.maze_editor)
+
+        elif route_key == "Numerasi:Flashcard":
+            self._number_card_preview()
+
         else:
             QMessageBox.information(
                 self,
-                "Belum Tersedia",
+                "Editor Belum Tersedia",
                 (
-                    f"Editor untuk aktivitas "
-                    f"'{material_data['activity_type']}' "
-                    "belum tersedia."
+                    f"Kategori: '{category}'\n"
+                    f"Aktivitas: '{activity_type}'\n\n"
+                    "Routing sudah dikenali, tetapi editor "
+                    "untuk aktivitas ini belum tersedia."
                 ),
             )
-    
+
     def _save_to_content_library(self, payload: dict):
         """Persist a valid editor payload without blocking its preview."""
         try:
@@ -209,6 +253,14 @@ class MainWindow(QMainWindow):
                 self,
             )
 
+        dialog.exec()
+
+    def _number_card_preview(self):
+        dialog = FlashcardPreviewDialog(
+            start_number=1,
+            end_number=50,
+            parent=self,
+        )
         dialog.exec()
 
     # STYLE

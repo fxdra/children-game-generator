@@ -21,11 +21,11 @@ class Sidebar(QFrame):
 
     def _setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 20, 16, 20)
+        layout.setContentsMargins(16, 25, 16, 20)
         layout.setSpacing(8)
 
         # Brand
-        brand = QLabel("Game Anak")
+        brand = QLabel("Worksheet Anak")
         brand.setObjectName("brand")
 
         subtitle = QLabel("Pembuat Materi Edukasi")

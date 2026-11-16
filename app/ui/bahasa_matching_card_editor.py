@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
 from app.services.openmoji_asset import OpenMojiAssetService
 from app.ui.asset_picker import AssetPickerDialog
 
-class MatchingCardEditor(QWidget):
+class BahasaMatchingCardEditor(QWidget):
     back_requested = Signal()
     preview_requested = Signal(dict)
 
@@ -312,7 +312,6 @@ class MatchingCardEditor(QWidget):
             "APEL",
             "PISANG",
             "PAUS",
-            "ANJING",
         ]
 
         for index, word in enumerate(

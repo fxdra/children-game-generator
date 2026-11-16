@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 from pathlib import Path
 
 from app.services.openmoji_asset import OpenMojiAssetService
-from app.services.matching_card_pdf import MatchingCardPDFService
+from app.services.bahasa_matching_card_pdf import MatchingCardPDFService
 
 
 class MatchingCardCanvas(QWidget):
