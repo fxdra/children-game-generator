@@ -10,11 +10,13 @@ from app.core.activity_router import ActivityRouter
 from app.ui.dashboard import Dashboard
 from app.ui.material_editor import MaterialEditor
 from app.ui.bahasa_matching_card_editor import BahasaMatchingCardEditor
+from app.ui.numerasi_matching_card_editor import NumerasiMatchingCardEditor
 from app.ui.materials import Materials
 from app.ui.sidebar import Sidebar
 from app.ui.worksheet_editor import WorksheetEditor
 from app.ui.worksheet_preview import WorksheetPreviewDialog
 from app.ui.bahasa_matching_card_preview import MatchingCardPreviewDialog
+from app.ui.numerasi_matching_card_preview import NumerasiMatchingCardPreviewDialog
 from app.ui.coloring_editor import ColoringEditor
 from app.ui.coloring_preview import ColoringPreviewDialog
 from app.ui.maze_editor import MazeEditor
@@ -52,6 +54,7 @@ class MainWindow(QMainWindow):
         self.materials = Materials()
         self.material_editor = MaterialEditor()
         self.bahasa_matching_card_editor = BahasaMatchingCardEditor()
+        self.numerasi_matching_card_editor = NumerasiMatchingCardEditor()
         self.worksheet_editor = WorksheetEditor()
         self.coloring_editor = ColoringEditor()
         self.maze_editor = MazeEditor()
@@ -60,6 +63,7 @@ class MainWindow(QMainWindow):
         self.pages.addWidget(self.material_editor)
         self.pages.addWidget(self.worksheet_editor)
         self.pages.addWidget(self.bahasa_matching_card_editor)
+        self.pages.addWidget(self.numerasi_matching_card_editor)
         self.pages.addWidget(self.coloring_editor)
         self.pages.addWidget(self.maze_editor)
         
@@ -83,6 +87,12 @@ class MainWindow(QMainWindow):
         )
         self.bahasa_matching_card_editor.back_requested.connect(
             self._back_to_material_editor
+        )
+        self.numerasi_matching_card_editor.back_requested.connect(
+            self._back_to_material_editor
+        )
+        self.numerasi_matching_card_editor.preview_requested.connect(
+            self._numerasi_matching_card_preview
         )
         self.coloring_editor.back_requested.connect(
             self._back_to_material_editor
@@ -156,6 +166,11 @@ class MainWindow(QMainWindow):
             self.worksheet_editor.set_material_data(material_data)
             self.pages.setCurrentWidget(self.worksheet_editor)
 
+        elif route_key == "Numerasi:Matching Card":
+            self.numerasi_matching_card_editor.reset_form()
+            self.numerasi_matching_card_editor.set_material_data(material_data)
+            self.pages.setCurrentWidget(self.numerasi_matching_card_editor)
+
         elif route_key == "Bahasa:Matching Card":
             self.bahasa_matching_card_editor.reset_form()
             self.bahasa_matching_card_editor.set_material_data(
@@ -227,6 +242,14 @@ class MainWindow(QMainWindow):
         )
         dialog.exec()
     
+    def _numerasi_matching_card_preview(self, matching_data: dict):
+        self._save_to_content_library(matching_data)
+        dialog = NumerasiMatchingCardPreviewDialog(
+            matching_data,
+            self,
+        )
+        dialog.exec()
+
     def _coloring_preview(self, coloring_data: dict,):
         self._save_to_content_library(coloring_data)
         dialog = ColoringPreviewDialog(
