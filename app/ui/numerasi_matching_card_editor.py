@@ -69,7 +69,6 @@ class NumerasiMatchingCardEditor(QWidget):
         back.setMinimumHeight(40)
         back.setCursor(Qt.PointingHandCursor)
         back.clicked.connect(self.back_requested.emit)
-
         footer.addWidget(back)
         footer.addStretch()
 
@@ -78,7 +77,6 @@ class NumerasiMatchingCardEditor(QWidget):
         preview.setMinimumHeight(40)
         preview.setCursor(Qt.PointingHandCursor)
         preview.clicked.connect(self._preview)
-
         footer.addWidget(preview)
         root.addLayout(footer)
 
@@ -91,11 +89,9 @@ class NumerasiMatchingCardEditor(QWidget):
                 padding: 8px 18px;
                 font-weight: 600;
             }
-
             QPushButton#numerasiBackButton:hover {
                 background-color: #CBD5E1;
             }
-
             QPushButton#numerasiPreviewButton {
                 background-color: #2563EB;
                 color: #FFFFFF;
@@ -104,7 +100,6 @@ class NumerasiMatchingCardEditor(QWidget):
                 padding: 8px 18px;
                 font-weight: 600;
             }
-
             QPushButton#numerasiPreviewButton:hover {
                 background-color: #1D4ED8;
             }
@@ -160,16 +155,14 @@ class NumerasiMatchingCardEditor(QWidget):
             row["word"].setVisible(is_word)
             row["question"].setVisible(not is_quantity and not is_word)
             row["answer"].setVisible(not is_quantity and not is_word)
-            # Hide labels alongside their corresponding fields.
             layout = row["frame"].layout()
             for pos in range(layout.count()):
-                item = layout.itemAt(pos)
-                widget = item.widget()
+                widget = layout.itemAt(pos).widget()
                 if isinstance(widget, QLabel):
                     text = widget.text()
                     widget.setVisible(
                         text.startswith("Pasangan") or
-                        (text == "Angka / nilai:" ) or
+                        text == "Angka / nilai:" or
                         (text == "Ilustrasi:" and is_quantity) or
                         (text == "Nama bilangan:" and is_word) or
                         (text == "Operasi:" and not is_quantity and not is_word) or
@@ -177,12 +170,20 @@ class NumerasiMatchingCardEditor(QWidget):
                     )
 
     def _open_asset_picker(self, pair_index):
-        dialog = AssetPickerDialog(self)
+        dialog = AssetPickerDialog(self, item_label="gambar")
         dialog.set_target(pair_index, len(self.pair_inputs))
-        dialog.asset_selected.connect(lambda name: self._set_asset(pair_index, name))
+
+        # target_index dibaca saat signal dikirim, sebelum picker maju ke pasangan berikutnya.
+        dialog.asset_selected.connect(
+            lambda asset_name, picker=dialog:
+            self._set_asset(picker.target_index, asset_name)
+        )
         dialog.exec()
 
     def _set_asset(self, pair_index, asset_name):
+        if not 0 <= pair_index < len(self.pair_inputs):
+            return
+
         button = self.pair_inputs[pair_index]["asset"]
         button.setProperty("asset_name", asset_name)
         path = OpenMojiAssetService.get_asset(asset_name, "color")
@@ -195,7 +196,9 @@ class NumerasiMatchingCardEditor(QWidget):
         painter.end()
         button.setIcon(QIcon(pixmap))
         button.setIconSize(pixmap.size())
-        button.setText(asset_name)
+        # Keep the editor button visual-only too; do not show the Unicode filename.
+        button.setText("")
+        button.setToolTip("Ilustrasi dipilih")
 
     def set_material_data(self, material_data):
         self.material_data = dict(material_data)
@@ -214,6 +217,7 @@ class NumerasiMatchingCardEditor(QWidget):
             row["asset"].setProperty("asset_name", None)
             row["asset"].setIcon(QIcon())
             row["asset"].setText("Pilih ilustrasi")
+            row["asset"].setToolTip("")
             row["word"].clear()
             row["question"].clear()
             row["answer"].clear()
