@@ -22,6 +22,7 @@ from app.ui.coloring_preview import ColoringPreviewDialog
 from app.ui.maze_editor import MazeEditor
 from app.ui.maze_preview import MazePreviewDialog
 from app.ui.tracing_preview import TracingPreviewDialog
+from app.ui.numerasi_maze_preview import NumerasiMazePreviewDialog
 from app.ui.flashcard_preview import FlashcardPreviewDialog
 from app.services.content_service import ContentService
 
@@ -185,7 +186,10 @@ class MainWindow(QMainWindow):
             self.coloring_editor.set_material_data(material_data)
             self.pages.setCurrentWidget(self.coloring_editor)
 
-        elif route_key.endswith(":Maze / Tracing"):
+        elif (
+            route_key.endswith(":Maze / Tracing")
+            or route_key.endswith(":Maze")
+        ):
             self.maze_editor.reset_form()
             self.maze_editor.set_material_data(material_data)
             self.pages.setCurrentWidget(self.maze_editor)
@@ -206,7 +210,6 @@ class MainWindow(QMainWindow):
             )
 
     def _save_to_content_library(self, payload: dict):
-        """Persist a valid editor payload without blocking its preview."""
         try:
             record, created = self.content_service.create_custom_content(payload)
             message = (
@@ -267,6 +270,11 @@ class MainWindow(QMainWindow):
 
         if sub_activity == "Tracing":
             dialog = TracingPreviewDialog(
+                maze_data,
+                self,
+            )
+        elif maze_data.get("category") == "Numerasi":
+            dialog = NumerasiMazePreviewDialog(
                 maze_data,
                 self,
             )

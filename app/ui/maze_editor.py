@@ -26,25 +26,15 @@ from PySide6.QtWidgets import (
 )
 
 from app.services.maze_generator import MazeGenerator
+from app.services.meatfighter_maze_generator import MeatFighterMazeGenerator
+from app.services.numerasi_maze_generator import NumerasiMazeGenerator
+from app.services.maze_graph_processor import MazeOptions
 
 from app.services.tracing_pdf import TracingPDF
 
 from app.ui.asset_picker import AssetPickerDialog
 
 class MazeEditor(QWidget):
-    """
-    Editor utama untuk aktivitas Maze dengan pilihan mode Maze atau Tracing.
-    Saat ini:
-    - Maze tersedia
-    - Tracing masih placeholder
-    Tugas:
-    - menerima data materi dari MaterialEditor
-    - memilih jenis aktivitas
-    - mengatur konfigurasi Maze
-    - memilih asset START dan FINISH
-    - membuat MazeGenerator
-    - mengirim data ke MazePreview
-    """
     back_requested = Signal()
     preview_requested = Signal(dict)
     # DEFAULT MAZE
@@ -100,6 +90,7 @@ class MazeEditor(QWidget):
         self.material_data = {}
         self.selected_assets = [None, None]
         self.selected_tracing_asset = None
+        self.selected_number_path_asset = None
         self.active_asset_target = 0
         self.activity_type = "Maze"
 
@@ -301,11 +292,28 @@ class MazeEditor(QWidget):
         )
         settings_layout.addRow(
             self._form_label(
-                "Tingkat Kesulitan"
+                "Level"
             ),
             self.difficulty_combo,
         )
+        self.numerasi_subtype_label = self._form_label("Sub Aktivitas Numerasi")
+        self.numerasi_subtype_combo = QComboBox()
+        self.numerasi_subtype_combo.setObjectName("formCombo")
+        self.numerasi_subtype_combo.addItems([
+            "Number Path",
+            "Math Equation",
+            "Number Pattern",
+        ])
+        settings_layout.addRow(self.numerasi_subtype_label, self.numerasi_subtype_combo)
+        self.numerasi_subtype_label.setVisible(False)
+        self.numerasi_subtype_combo.setVisible(False)
+
+        self.numerasi_subtype_combo.currentTextChanged.connect(
+            self._numerasi_subtype_changed
+        )
+
         # INSTRUKSI
+        self.instruction_label = self._form_label("Instruksi")
         self.instruction_input = QLineEdit()
         self.instruction_input.setObjectName(
             "formInput"
@@ -317,9 +325,7 @@ class MazeEditor(QWidget):
             "Tulis instruksi untuk anak..."
         )
         settings_layout.addRow(
-            self._form_label(
-                "Instruksi"
-            ),
+            self.instruction_label,
             self.instruction_input,
         )
         # CUSTOM SETTINGS
@@ -437,6 +443,7 @@ class MazeEditor(QWidget):
         )
         # ASSET CARD
         asset_card = QFrame()
+        self.maze_asset_card = asset_card
         asset_card.setObjectName(
             "contentCard"
         )
@@ -1040,6 +1047,13 @@ class MazeEditor(QWidget):
             self.activity_stack.setCurrentWidget(
                 self.maze_page
             )
+            is_numerasi = self.material_data.get("category") == "Numerasi"
+            self.maze_asset_card.setVisible(not is_numerasi)
+            self.numerasi_subtype_label.setVisible(is_numerasi)
+            self.numerasi_subtype_combo.setVisible(is_numerasi)
+            self._numerasi_subtype_changed(self.numerasi_subtype_combo.currentText())
+            self.instruction_label.setVisible(not is_numerasi)
+            self.instruction_input.setVisible(not is_numerasi)
             self.preview_button.setEnabled(
                 True
             )
@@ -1047,6 +1061,11 @@ class MazeEditor(QWidget):
             self.activity_stack.setCurrentWidget(
                 self.tracing_page
             )
+            self.maze_asset_card.setVisible(False)
+            self.numerasi_subtype_label.setVisible(False)
+            self.numerasi_subtype_combo.setVisible(False)
+            self.instruction_label.setVisible(False)
+            self.instruction_input.setVisible(False)
 
             self.preview_button.setEnabled(
                 self.selected_tracing_asset is not None
@@ -1188,6 +1207,19 @@ class MazeEditor(QWidget):
         self.material_data = dict(
             material_data
         )
+        is_numerasi = self.material_data.get("category") == "Numerasi"
+        custom_index = self.difficulty_combo.findText("Custom")
+        if is_numerasi and custom_index >= 0:
+            self.difficulty_combo.removeItem(custom_index)
+        elif not is_numerasi and custom_index < 0:
+            self.difficulty_combo.addItem("Custom")
+        self.numerasi_subtype_label.setVisible(is_numerasi)
+        self.numerasi_subtype_combo.setVisible(is_numerasi)
+        self._numerasi_subtype_changed(self.numerasi_subtype_combo.currentText())
+        self.maze_asset_card.setVisible(not is_numerasi)
+        self._numerasi_subtype_changed(self.numerasi_subtype_combo.currentText())
+        self.instruction_label.setVisible(not is_numerasi)
+        self.instruction_input.setVisible(not is_numerasi)
         self.instruction_input.setText(
             self.DEFAULT_INSTRUCTION
         )
@@ -1195,6 +1227,12 @@ class MazeEditor(QWidget):
     # RESET
     def reset_form(self):
         self.material_data = {}
+        self.numerasi_subtype_label.setVisible(False)
+        self.numerasi_subtype_combo.setVisible(False)
+        self.maze_asset_card.setVisible(True)
+        self.instruction_label.setVisible(True)
+        self.instruction_input.setVisible(True)
+        self.numerasi_subtype_combo.setCurrentIndex(0)
         self.activity_type = "Maze"
         # Activity
         self.activity_combo.blockSignals(
@@ -1239,15 +1277,9 @@ class MazeEditor(QWidget):
         self.selected_assets = [None, None]
         self.selected_tracing_asset = None
         self.active_asset_target = 0
-        self._clear_asset_slot(
-            self.start_preview
-        )
-        self._clear_asset_slot(
-            self.finish_preview
-        )
-        self.preview_button.setEnabled(
-            True
-        )
+        self._clear_asset_slot(self.start_preview)
+        self._clear_asset_slot(self.finish_preview)
+        self.preview_button.setEnabled(True)
     
     def _clear_asset_slot(
         self,
@@ -1353,6 +1385,47 @@ class MazeEditor(QWidget):
             asset_name
         )
     
+    def _numerasi_subtype_changed(self, subtype):
+        is_number_path = (
+            self.material_data.get("category") == "Numerasi"
+            and subtype == "Number Path"
+            and self.activity_type == "Maze"
+        )
+
+        self.maze_asset_card.setVisible(
+            self.material_data.get("category") != "Numerasi"
+            or is_number_path
+        )
+
+        if is_number_path:
+            self.pick_assets_button.setText("Pilih Asset START & FINISH")
+
+    def _pick_number_path_character(self):
+        dialog = AssetPickerDialog(self, item_label="Karakter")
+        dialog.set_target(0, 1)
+        dialog.asset_selected.connect(self._number_path_character_selected)
+        dialog.exec()
+
+    def _number_path_character_selected(self, asset_name):
+        try:
+            from app.services.openmoji_asset import OpenMojiAssetService
+            asset_path = OpenMojiAssetService.get_asset(asset_name, "color")
+            self.number_path_character_preview.load(asset_path.read_bytes())
+            self.selected_number_path_asset = asset_name
+            self.number_path_character_status.setText(asset_name)
+        except Exception as error:
+            QMessageBox.warning(
+                self,
+                "Asset Gagal Dimuat",
+                f"Ikon '{asset_name}' gagal dimuat.\n\n{error}",
+            )
+
+    def _clear_number_path_character(self):
+        self.number_path_character_preview.load(
+            b'<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1" viewBox="0 0 1 1"/>'
+        )
+        self.number_path_character_status.setText("Belum dipilih")
+
     # PREVIEW
     def _preview(self):
         # TRACING
@@ -1380,7 +1453,97 @@ class MazeEditor(QWidget):
             self.preview_requested.emit(tracing_data)
             return
 
-        # MAZE
+        # NUMERASI MAZE
+        if self.material_data.get("category") == "Numerasi":
+            subtype = self.numerasi_subtype_combo.currentText()
+            difficulty = self.difficulty_combo.currentText()
+
+            if difficulty == "Custom":
+                difficulty = "Mudah"
+
+            if subtype == "Number Path":
+                if (
+                    self.selected_assets[0] is None
+                    or self.selected_assets[1] is None
+                ):
+                    QMessageBox.warning(
+                        self,
+                        "Asset Belum Lengkap",
+                        "Pilih ikon START dan FINISH terlebih dahulu.",
+                    )
+                    return
+
+                try:
+                    maze_sizes = {
+                        "Mudah": (14, 16),
+                        "Sedang": (20, 22),
+                        "Sulit": (24, 28),
+                    }
+
+                    width, height = maze_sizes[difficulty]
+
+                    generator = MeatFighterMazeGenerator(
+                        MazeOptions(
+                            width=width,
+                            height=height,
+                            loop_frac=0.05,
+                            cross_frac=0.25,
+                            long_passages=False,
+                        )
+                    )
+
+                    maze = generator.generate()
+
+                except Exception as error:
+                    QMessageBox.critical(
+                        self,
+                        "Number Path Gagal Dibuat",
+                        f"Aktivitas gagal dibuat.\n\n{error}",
+                    )
+                    return
+
+                maze_data = {
+                    **self.material_data,
+                    "activity_type": "Maze",
+                    "sub_activity_type": subtype,
+                    "title": self.material_data.get("title", "Number Path"),
+                    "difficulty": difficulty,
+                    "instruction": "Mulai dari START. Cari angka secara berurutan hingga FINISH.",
+                    "meatfighter_maze": maze,
+                    "start_asset": self.selected_assets[0],
+                    "finish_asset": self.selected_assets[1],
+                }
+
+                self.preview_requested.emit(maze_data)
+                return
+
+            # Math Equation dan Number Pattern masih memakai generator lama.
+            try:
+                generator = NumerasiMazeGenerator(subtype, difficulty)
+                puzzle = generator.generate()
+            except Exception as error:
+                QMessageBox.critical(
+                    self,
+                    "Numerasi Maze Gagal Dibuat",
+                    f"Aktivitas gagal dibuat.\n\n{error}",
+                )
+                return
+
+            maze_data = {
+                **self.material_data,
+                "activity_type": "Maze",
+                "sub_activity_type": subtype,
+                "title": self.material_data.get("title", "Numerasi Maze"),
+                "difficulty": difficulty,
+                "instruction": puzzle.instruction,
+                "numerasi_maze": puzzle,
+                "character_asset": self.selected_number_path_asset,
+            }
+
+            self.preview_requested.emit(maze_data)
+            return
+
+        # MAZE GENERIK
         if (
             self.selected_assets[0] is None
             or self.selected_assets[1] is None

@@ -21,7 +21,6 @@ class WorksheetEditor(QWidget):
     WORKSHEET_TYPES = [
         "Menghitung",
         "Memilih Jawaban",
-        "Menulis / Tracing",
     ]
 
     def __init__(self):
@@ -119,12 +118,6 @@ class WorksheetEditor(QWidget):
         self.options_input.setObjectName("formInput")
         form_layout.addRow(self.options_label, self.options_input)
 
-        self.tracing_label = self._create_label("Angka untuk Tracing")
-        self.tracing_input = QLineEdit()
-        self.tracing_input.setPlaceholderText("Contoh: 1 2 3")
-        self.tracing_input.setObjectName("formInput")
-        form_layout.addRow(self.tracing_label, self.tracing_input)
-
         main_layout.addWidget(worksheet_card)
 
         footer_layout = QHBoxLayout()
@@ -155,35 +148,28 @@ class WorksheetEditor(QWidget):
 
     def _update_type_fields(self, worksheet_type: str):
         is_choice = worksheet_type == "Memilih Jawaban"
-        is_tracing = worksheet_type == "Menulis / Tracing"
         is_counting = worksheet_type == "Menghitung"
 
         self.answer_label.setText(
             "Jawaban Benar" if is_choice else "Jumlah / Jawaban"
         )
-        self.answer_label.setVisible(not is_tracing)
-        self.answer_input.setVisible(not is_tracing)
+        self.answer_label.setVisible(True)
+        self.answer_input.setVisible(True)
 
         self.options_label.setVisible(is_choice)
         self.options_input.setVisible(is_choice)
-
-        self.tracing_label.setVisible(is_tracing)
-        self.tracing_input.setVisible(is_tracing)
 
         if is_counting:
             self.question_input.setPlaceholderText(
                 "Contoh: Ada berapa apel?"
             )
             self.answer_input.setPlaceholderText("Masukkan jumlah objek")
+
         elif is_choice:
             self.question_input.setPlaceholderText(
                 "Contoh: Berapa hasil dari 2 + 1?"
             )
             self.answer_input.setPlaceholderText("Jawaban benar, contoh: 3")
-        else:
-            self.question_input.setPlaceholderText(
-                "Contoh: Tebalkan angka berikut."
-            )
 
     def set_material_data(self, material_data: dict):
         self.material_data = dict(material_data or {})
@@ -226,28 +212,18 @@ class WorksheetEditor(QWidget):
             "question": question,
         }
 
-        if worksheet_type == "Menulis / Tracing":
-            tracing_text = self.tracing_input.text().strip()
-            if not tracing_text:
-                QMessageBox.warning(
-                    self,
-                    "Data Belum Lengkap",
-                    "Isi angka atau pola yang akan ditelusuri.",
-                )
-                self.tracing_input.setFocus()
-                return
-            worksheet_data["tracing_text"] = tracing_text
-        else:
-            answer = self.answer_input.text().strip()
-            if not answer:
-                QMessageBox.warning(
-                    self,
-                    "Data Belum Lengkap",
-                    "Jawaban atau jumlah wajib diisi.",
-                )
-                self.answer_input.setFocus()
-                return
-            worksheet_data["answer"] = answer
+        answer = self.answer_input.text().strip()
+
+        if not answer:
+            QMessageBox.warning(
+                self,
+                "Data Belum Lengkap",
+                "Jawaban atau jumlah wajib diisi.",
+            )
+            self.answer_input.setFocus()
+            return
+
+        worksheet_data["answer"] = answer
 
         if worksheet_type == "Memilih Jawaban":
             raw_options = self.options_input.text().strip()
@@ -316,6 +292,5 @@ class WorksheetEditor(QWidget):
         self.question_input.clear()
         self.answer_input.clear()
         self.options_input.clear()
-        self.tracing_input.clear()
         self.worksheet_type_combo.setCurrentIndex(0)
         self._update_type_fields(self.worksheet_type_combo.currentText())

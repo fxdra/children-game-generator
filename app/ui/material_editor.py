@@ -1,3 +1,4 @@
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QComboBox,
@@ -13,6 +14,7 @@ from PySide6.QtWidgets import (
     QTextEdit,
 )
 from app.core.skill_mapping import get_weighted_skills
+
 
 class MaterialEditor(QWidget):
     back_requested = Signal()
@@ -112,6 +114,8 @@ class MaterialEditor(QWidget):
         self.activity_combo = QComboBox()
         self.activity_combo.setObjectName("formCombo")
 
+        # Certificate dihapus karena merupakan reward,
+        # bukan jenis aktivitas yang digenerate.
         self.activity_combo.addItems([
             "Worksheet",
             "Flashcard",
@@ -121,12 +125,24 @@ class MaterialEditor(QWidget):
             "Puzzle",
             "Board Game",
             "Quest",
-            "Certificate",
         ])
 
         form_layout.addRow(
             self._create_label("Jenis Aktivitas"),
             self.activity_combo,
+        )
+
+        # Informasi certificate
+        self.certificate_info = QLabel(
+            "Certificate akan tersedia setelah orang tua "
+            "mengonfirmasi minimal 6 dari 8 aktivitas selesai."
+        )
+        self.certificate_info.setObjectName("pageSubtitle")
+        self.certificate_info.setWordWrap(True)
+
+        form_layout.addRow(
+            QLabel(""),
+            self.certificate_info,
         )
 
         self.category_combo.currentTextChanged.connect(
@@ -179,6 +195,7 @@ class MaterialEditor(QWidget):
         footer_layout.addWidget(continue_button)
 
         main_layout.addLayout(footer_layout)
+
         self._update_skills()
 
     def _create_label(self, text: str):

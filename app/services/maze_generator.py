@@ -9,22 +9,6 @@ from erbsland_maze import (
 
 
 class MazeGenerator:
-    """
-    Generator maze untuk GameAnak.
-
-    Tugas class ini:
-    - menerima ukuran maze dalam mm
-    - menentukan posisi START dan FINISH
-    - membuat maze menggunakan Erbsland Maze
-    - mengembalikan Generator dan RoomGrid
-
-    Class ini tidak menangani:
-    - rendering visual
-    - OpenMoji
-    - preview
-    - PDF
-    """
-
     def __init__(
         self,
         width_mm: float = 180.0,
@@ -38,13 +22,6 @@ class MazeGenerator:
         self.generator = None
 
     def generate(self):
-        """
-        Generate maze dan mengembalikan object Generator Erbsland.
-
-        Returns:
-            Generator: object generator yang sudah selesai membuat maze.
-        """
-
         svg_setup = SvgSetup(
             width=self.width_mm,
             height=self.height_mm,
@@ -80,17 +57,6 @@ class MazeGenerator:
         return self.generator
 
     def get_room_grid(self):
-        """
-        Mengembalikan RoomGrid dari maze yang sudah dibuat.
-
-        Returns:
-            RoomGrid
-
-        Raises:
-            RuntimeError:
-                Jika generate() belum dipanggil.
-        """
-
         if self.generator is None:
             raise RuntimeError(
                 "Maze belum dibuat. Panggil generate() terlebih dahulu."
@@ -99,10 +65,6 @@ class MazeGenerator:
         return self.generator.room_grid
 
     def get_start_room(self):
-        """
-        Mengembalikan room START.
-        """
-
         if self.generator is None:
             raise RuntimeError(
                 "Maze belum dibuat. Panggil generate() terlebih dahulu."
@@ -111,10 +73,6 @@ class MazeGenerator:
         return self.generator.path_end_rooms[0]
 
     def get_finish_room(self):
-        """
-        Mengembalikan room FINISH.
-        """
-
         if self.generator is None:
             raise RuntimeError(
                 "Maze belum dibuat. Panggil generate() terlebih dahulu."
