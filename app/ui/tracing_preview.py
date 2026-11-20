@@ -1,10 +1,10 @@
 from PySide6.QtCore import Qt, QRectF
 from PySide6.QtGui import (
+    QColor,
     QFont,
-    QImageReader,
     QPainter,
+    QPainterPath,
     QPen,
-    QPixmap,
 )
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (
@@ -22,10 +22,6 @@ from app.services.tracing_pdf import TracingPDF
 
 
 class TracingCanvas(QWidget):
-    """
-    Preview Tracing dengan rasio kertas A4 Portrait.
-    """
-
     def __init__(self, tracing_data: dict):
         super().__init__()
 
@@ -36,11 +32,6 @@ class TracingCanvas(QWidget):
             QSizePolicy.Policy.Expanding,
             QSizePolicy.Policy.Expanding,
         )
-
-        self.svg_renderer = None
-        self.image_pixmap = None
-
-        self._load_image()
 
     def _load_image(self):
         tracing_asset = self.tracing_data.get(
@@ -182,17 +173,14 @@ class TracingCanvas(QWidget):
             instruction,
         )
 
-        # TRACING IMAGE AREA
-        image_area = QRectF(
-            page_x + margin,
-            page_y + 55 * scale,
-            rendered_width - 2 * margin,
-            rendered_height - 100 * scale,
-        )
-
-        self._draw_tracing_image(
+        # TRACING TEXT AREA
+        self._draw_tracing_text(
             painter,
-            image_area,
+            page_x,
+            page_y,
+            rendered_width,
+            rendered_height,
+            scale,
         )
 
         # NAME FIELD
@@ -220,50 +208,98 @@ class TracingCanvas(QWidget):
         )
 
         painter.end()
-
-    def _draw_tracing_image(
+  
+    def _draw_tracing_text(
         self,
         painter: QPainter,
-        target_rect: QRectF,
+        page_x: float,
+        page_y: float,
+        page_width: float,
+        page_height: float,
+        scale: float,
     ):
-        if self.svg_renderer:
-            self.svg_renderer.render(
-                painter,
-                target_rect,
-            )
-            return
+        target = str(
+            self.tracing_data.get("tracing_text", "1 2 3")
+        ).strip()
 
-        if self.image_pixmap:
-            image_size = self.image_pixmap.size()
+        if not target:
+            target = "1 2 3"
 
-            scaled_size = image_size.scaled(
-                int(target_rect.width()),
-                int(target_rect.height()),
-                Qt.AspectRatioMode.KeepAspectRatio,
-            )
+        # FONT ANGKA
+        font = QFont("Arial", max(52, int(page_width * 0.16)))
+        font.setBold(True)
 
-            image_x = (
-                target_rect.center().x()
-                - scaled_size.width() / 2
-            )
+        painter.setFont(font)
+        metrics = painter.fontMetrics()
+        text_width = metrics.horizontalAdvance(target)
 
-            image_y = (
-                target_rect.center().y()
-                - scaled_size.height() / 2
-            )
+        # Sesuaikan ukuran agar teks tidak keluar dari kertas
+        while text_width > page_width * 0.78 and font.pointSize() > 28:
+            font.setPointSize(font.pointSize() - 2)
+            painter.setFont(font)
+            metrics = painter.fontMetrics()
+            text_width = metrics.horizontalAdvance(target)
 
-            image_rect = QRectF(
-                image_x,
-                image_y,
-                scaled_size.width(),
-                scaled_size.height(),
-            )
+        # Bentuk teks menjadi path
+        path = QPainterPath()
 
-            painter.drawPixmap(
-                image_rect,
-                self.image_pixmap,
-                QRectF(self.image_pixmap.rect()),
+        baseline_y = page_y + page_height * 0.66
+
+        path.addText(
+            page_x + (page_width - text_width) / 2,
+            baseline_y,
+            font,
+            target,
+        )
+
+        # GARIS TITIK-TITIK
+        dotted_pen = QPen(
+            QColor("#8995A5"),
+            max(1.5, page_width * 0.004),
+            Qt.PenStyle.DotLine,
+            Qt.PenCapStyle.RoundCap,
+            Qt.PenJoinStyle.RoundJoin,
+        )
+
+        painter.setPen(dotted_pen)
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawPath(path)
+
+        # GARIS PANDUAN
+        guide_y = page_y + page_height * 0.70
+
+        painter.setPen(
+            QPen(
+                QColor("#B8C0CC"),
+                1,
+                Qt.PenStyle.DashLine,
             )
+        )
+
+        painter.drawLine(
+            int(page_x + page_width * 0.14),
+            int(guide_y),
+            int(page_x + page_width * 0.86),
+            int(guide_y),
+        )
+
+        # PETUNJUK
+        hint_font = QFont()
+        hint_font.setPointSize(max(9, int(page_width * 0.015)))
+
+        painter.setFont(hint_font)
+        painter.setPen(QColor("#667085"))
+
+        painter.drawText(
+            QRectF(
+                page_x,
+                page_y + page_height * 0.74,
+                page_width,
+                30 * scale,
+            ),
+            Qt.AlignmentFlag.AlignCenter,
+            "Telusuri angka mengikuti garis titik-titik.",
+        )
 
 
 class TracingPreviewDialog(QDialog):

@@ -174,14 +174,6 @@ class MazeEditor(QWidget):
         self.tracing_page = (
             self._create_tracing_page()
         )
-        self.tracing_asset_container.setSizePolicy(
-            QSizePolicy.Policy.Expanding,
-            QSizePolicy.Policy.Expanding,
-        )
-
-        self.tracing_grid.setAlignment(
-            Qt.AlignmentFlag.AlignTop
-        )
         self.activity_stack.addWidget(
             self.maze_page
         )
@@ -534,96 +526,51 @@ class MazeEditor(QWidget):
         layout = QVBoxLayout(page)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(18)
-        # MAIN CARD
+
         card = QFrame()
         card.setObjectName("contentCard")
+
         card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(
-            24, 24, 24, 24
-        )
+        card_layout.setContentsMargins(24, 24, 24, 24)
         card_layout.setSpacing(16)
-        # HEADER
-        header = QHBoxLayout()
-        title = QLabel("Tracing")
+
+        title = QLabel("Menulis / Tracing")
         title.setObjectName("sectionTitle")
-        header.addWidget(title)
-        header.addStretch()
-        self.tracing_upload_button = QPushButton(
-            "Upload Gambar"
-        )
-        self.tracing_upload_button.setObjectName(
-            "primaryButton"
-        )
-        self.tracing_upload_button.clicked.connect(
-            self._upload_tracing_assets
-        )
-        header.addWidget(
-            self.tracing_upload_button
-        )
-        card_layout.addLayout(header)
-        # DESCRIPTION
+        card_layout.addWidget(title)
+
         description = QLabel(
-            "Pilih gambar tracing dari koleksi aset "
-            "atau tambahkan gambar sendiri."
+            "Masukkan angka atau pola yang ingin ditelusuri oleh anak."
         )
         description.setObjectName("materialInfo")
         description.setWordWrap(True)
         card_layout.addWidget(description)
-        # CATEGORY FILTER
-        self.tracing_category_combo = QComboBox()
-        self.tracing_category_combo.setObjectName(
-            "formCombo"
+
+        self.tracing_input_label = QLabel("Angka / Pola Tracing")
+        self.tracing_input_label.setObjectName("formLabel")
+
+        self.tracing_input = QLineEdit()
+        self.tracing_input.setObjectName("formInput")
+        self.tracing_input.setPlaceholderText("Contoh: 1 2 3")
+        self.tracing_input.setMaxLength(30)
+
+        card_layout.addWidget(self.tracing_input_label)
+        card_layout.addWidget(self.tracing_input)
+
+        self.tracing_instruction_label = QLabel("Instruksi")
+        self.tracing_instruction_label.setObjectName("formLabel")
+
+        self.tracing_instruction_input = QLineEdit()
+        self.tracing_instruction_input.setObjectName("formInput")
+        self.tracing_instruction_input.setText(
+            "Telusuri angka mengikuti garis titik-titik."
         )
-        self.tracing_category_combo.addItem(
-            "Semua Kategori",
-            None,
-        )
-        for label, folder in self.TRACING_CATEGORIES.items():
-            self.tracing_category_combo.addItem(
-                label,
-                folder,
-            )
-        self.tracing_category_combo.currentIndexChanged.connect(
-            self._refresh_tracing_assets
-        )
-        card_layout.addWidget(
-            self.tracing_category_combo
-        )
-        # ASSET COUNT
-        self.tracing_asset_count = QLabel(
-            "0 gambar"
-        )
-        self.tracing_asset_count.setObjectName(
-            "materialInfo"
-        )
-        card_layout.addWidget(
-            self.tracing_asset_count
-        )
-        # SCROLL AREA
-        self.tracing_scroll = QScrollArea()
-        self.tracing_scroll.setWidgetResizable(True)
-        self.tracing_scroll.setFrameShape(
-            QFrame.Shape.NoFrame
-        )
-        self.tracing_asset_container = QWidget()
-        self.tracing_grid = QGridLayout(
-            self.tracing_asset_container
-        )
-        self.tracing_grid.setContentsMargins(
-            4, 4, 4, 4
-        )
-        self.tracing_grid.setSpacing(14)
-        self.tracing_grid.setAlignment(
-            Qt.AlignmentFlag.AlignTop
-        )
-        self.tracing_scroll.setWidget(
-            self.tracing_asset_container
-        )
-        card_layout.addWidget(
-            self.tracing_scroll,
-            1,
-        )
-        layout.addWidget(card, 1)
+
+        card_layout.addWidget(self.tracing_instruction_label)
+        card_layout.addWidget(self.tracing_instruction_input)
+
+        card_layout.addStretch()
+
+        layout.addWidget(card)
         return page
     
     # TRACING ASSET SCANNER
@@ -1057,10 +1004,12 @@ class MazeEditor(QWidget):
             self.preview_button.setEnabled(
                 True
             )
+       
         elif activity_type == "Tracing":
             self.activity_stack.setCurrentWidget(
                 self.tracing_page
             )
+
             self.maze_asset_card.setVisible(False)
             self.numerasi_subtype_label.setVisible(False)
             self.numerasi_subtype_combo.setVisible(False)
@@ -1068,11 +1017,14 @@ class MazeEditor(QWidget):
             self.instruction_input.setVisible(False)
 
             self.preview_button.setEnabled(
-                self.selected_tracing_asset is not None
+                bool(self.tracing_input.text().strip())
             )
+            self.tracing_input.textChanged.connect(
+            lambda text: self.preview_button.setEnabled(
+                bool(text.strip())
+            )
+        )
 
-            self._refresh_tracing_assets()
-    
     # DIFFICULTY
     def _difficulty_changed(
         self,
@@ -1223,6 +1175,21 @@ class MazeEditor(QWidget):
         self.instruction_input.setText(
             self.DEFAULT_INSTRUCTION
         )
+
+        # Tentukan halaman berdasarkan jenis aktivitas
+        activity_type = self.material_data.get("activity_type")
+
+        target_activity = (
+            "Tracing"
+            if activity_type == "Maze / Tracing"
+            else "Maze"
+        )
+
+        self.activity_combo.blockSignals(True)
+        self.activity_combo.setCurrentText(target_activity)
+        self.activity_combo.blockSignals(False)
+
+        self._activity_changed(target_activity)
     
     # RESET
     def reset_form(self):
@@ -1430,12 +1397,15 @@ class MazeEditor(QWidget):
     def _preview(self):
         # TRACING
         if self.activity_type == "Tracing":
-            if self.selected_tracing_asset is None:
+            tracing_text = self.tracing_input.text().strip()
+
+            if not tracing_text:
                 QMessageBox.warning(
                     self,
-                    "Gambar Belum Dipilih",
-                    "Pilih gambar Tracing terlebih dahulu.",
+                    "Data Belum Lengkap",
+                    "Isi angka atau pola yang akan ditelusuri.",
                 )
+                self.tracing_input.setFocus()
                 return
 
             tracing_data = {
@@ -1446,8 +1416,9 @@ class MazeEditor(QWidget):
                     "title",
                     "Tracing",
                 ),
-                "instruction": self.TRACING_DEFAULT_INSTRUCTION,
-                "tracing_asset": self.selected_tracing_asset,
+                "instruction": self.tracing_instruction_input.text().strip()
+                    or "Telusuri angka mengikuti garis titik-titik.",
+                "tracing_text": tracing_text,
             }
 
             self.preview_requested.emit(tracing_data)

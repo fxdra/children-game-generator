@@ -1,11 +1,10 @@
 from pathlib import Path
 
+from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
-from reportlab.lib.utils import ImageReader
-from reportlab.graphics import renderPDF
-from svglib.svglib import svg2rlg
+
 
 
 class TracingPDF:
@@ -28,26 +27,16 @@ class TracingPDF:
     ):
         output_file = Path(output_path)
 
-        # Validasi data gambar
-        tracing_asset = tracing_data.get("tracing_asset")
+        # Validasi teks tracing
+        tracing_text = str(
+            tracing_data.get("tracing_text", "")
+        ).strip()
 
-        if not tracing_asset:
+        if not tracing_text:
             raise ValueError(
-                "Gambar belum dipilih."
+                "Angka atau pola Tracing belum diisi."
             )
-
-        image_path = Path(tracing_asset["path"])
-
-        if not image_path.exists():
-            raise FileNotFoundError(
-                f"Gambar Tracing tidak ditemukan: {image_path}"
-            )
-
-        if image_path.suffix.lower() not in TracingPDF.SUPPORTED_FORMATS:
-            raise ValueError(
-                "Format gambar tidak didukung."
-            )
-
+        
         output_file.parent.mkdir(
             parents=True,
             exist_ok=True,
@@ -68,9 +57,9 @@ class TracingPDF:
                 page_height,
             )
 
-            TracingPDF._draw_tracing_image(
+            TracingPDF._draw_tracing_text(
                 pdf,
-                image_path,
+                tracing_text,
                 page_width,
                 page_height,
             )
@@ -128,149 +117,110 @@ class TracingPDF:
             instruction,
         )
 
+
     @staticmethod
-    def _draw_tracing_image(
+    def _draw_tracing_text(
         pdf,
-        image_path,
+        tracing_text,
         page_width,
         page_height,
     ):
-        # Area gambar
-        margin = 20 * mm
+        target = str(tracing_text).strip()
 
-        available_width = page_width - (2 * margin)
+        # UKURAN FONT
+        font_size = 76
+        max_width = page_width * 0.78
 
-        image_bottom = 45 * mm
-        image_top = page_height - 55 * mm
+        while font_size > 30 and pdf.stringWidth(
+            target,
+            "Helvetica-Bold",
+            font_size,
+        ) > max_width:
+            font_size -= 2
 
-        available_height = image_top - image_bottom
-
-        suffix = image_path.suffix.lower()
-
-        if suffix == ".svg":
-            TracingPDF._draw_svg(
-                pdf,
-                image_path,
-                margin,
-                image_bottom,
-                available_width,
-                available_height,
-            )
-
-        else:
-            TracingPDF._draw_raster(
-                pdf,
-                image_path,
-                margin,
-                image_bottom,
-                available_width,
-                available_height,
-            )
-
-    @staticmethod
-    def _draw_svg(
-        pdf,
-        image_path,
-        x,
-        y,
-        available_width,
-        available_height,
-    ):
-        drawing = svg2rlg(
-            str(image_path)
+        text_width = pdf.stringWidth(
+            target,
+            "Helvetica-Bold",
+            font_size,
         )
 
-        if drawing is None:
-            raise ValueError(
-                "Gagal membaca file SVG Tracing."
-            )
-
-        if drawing.width <= 0 or drawing.height <= 0:
-            raise ValueError(
-                "Ukuran SVG tidak valid."
-            )
-
-        scale = min(
-            available_width / drawing.width,
-            available_height / drawing.height,
-        )
-
-        rendered_width = drawing.width * scale
-        rendered_height = drawing.height * scale
-
-        center_x = (
-            x + available_width / 2
-        )
-
-        center_y = (
-            y + available_height / 2
-        )
-
+        # DEBUG: GAMBAR TEKS LANGSUNG KE CANVAS
         pdf.saveState()
 
-        pdf.translate(
-            center_x - rendered_width / 2,
-            center_y - rendered_height / 2,
+        pdf.setFont(
+            "Helvetica-Bold",
+            font_size,
         )
 
-        pdf.scale(
-            scale,
-            scale,
+        pdf.setFillColor(
+            colors.HexColor("#8995A5")
         )
 
-        renderPDF.draw(
-            drawing,
-            pdf,
-            0,
-            0,
+        # DRAWING TRACING TEXT
+        pdf.saveState()
+
+        pdf.setStrokeColor(
+            colors.HexColor("#8995A5")
         )
+
+        pdf.setLineWidth(1.2)
+        pdf.setDash(1.5, 2.5)
+
+        text = pdf.beginText()
+
+        text.setTextOrigin(
+            (page_width - text_width) / 2,
+            page_height - 155 * mm,
+        )
+
+        text.setFont(
+            "Helvetica-Bold",
+            font_size,
+        )
+
+        text.setTextRenderMode(1)
+
+        text.textLine(target)
+
+        pdf.drawText(text)
 
         pdf.restoreState()
 
-    @staticmethod
-    def _draw_raster(
-        pdf,
-        image_path,
-        x,
-        y,
-        available_width,
-        available_height,
-    ):
-        image = ImageReader(
-            str(image_path)
+        pdf.restoreState()
+
+        # GARIS PANDUAN
+        guide_y = page_height - 165 * mm
+
+        pdf.setStrokeColor(
+            colors.HexColor("#B8C0CC")
         )
 
-        image_width, image_height = image.getSize()
+        pdf.setLineWidth(0.8)
+        pdf.setDash(2, 3)
 
-        if image_width <= 0 or image_height <= 0:
-            raise ValueError(
-                "Ukuran gambar Tracing tidak valid."
-            )
-
-        scale = min(
-            available_width / image_width,
-            available_height / image_height,
+        pdf.line(
+            25 * mm,
+            guide_y,
+            page_width - 25 * mm,
+            guide_y,
         )
 
-        rendered_width = image_width * scale
-        rendered_height = image_height * scale
+        pdf.setDash()
 
-        image_x = (
-            x + (available_width - rendered_width) / 2
+        # PETUNJUK
+        pdf.setFillColor(
+            colors.HexColor("#667085")
         )
 
-        image_y = (
-            y + (available_height - rendered_height) / 2
+        pdf.setFont(
+            "Helvetica",
+            10,
         )
 
-        pdf.drawImage(
-            image,
-            image_x,
-            image_y,
-            width=rendered_width,
-            height=rendered_height,
-            preserveAspectRatio=True,
-            mask="auto",
+        pdf.drawCentredString(
+            page_width / 2,
+            page_height - 180 * mm,
+            "Telusuri angka mengikuti garis panduan.",
         )
 
     @staticmethod

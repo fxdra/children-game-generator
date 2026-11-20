@@ -44,3 +44,4 @@ output/
 .DS_Store
 Thumbs.db
 desktop.ini
+data/content_library.json
